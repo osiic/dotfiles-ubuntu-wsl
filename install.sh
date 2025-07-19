@@ -20,6 +20,7 @@ section() {
 
 # Update and install basic packages
 section "Updating system and installing basic packages"
+sudo add-apt-repository ppa:neovim-ppa/unstable
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl git tmux neovim unzip build-essential openssh-client wget zsh
 
