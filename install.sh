@@ -128,6 +128,7 @@ alias ..='cd ..'
 alias gs='git status'
 alias ga='git add .'
 alias gc='git commit -m'
+alias gac='git add . && git commit -m'
 alias dev='cd ~/projects'
 
 # NVM
