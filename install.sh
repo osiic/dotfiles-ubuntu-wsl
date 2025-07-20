@@ -12,6 +12,9 @@ echo -e "${YELLOW}🚀 Starting WSL Ubuntu 24.04 setup for Node.js development..
 # Create dotfiles directory
 DOTFILES_DIR="$HOME/dotfiles"
 mkdir -p "$DOTFILES_DIR"
+# Create dotfiles directory
+PROJECTS_DIR="$HOME/projects"
+mkdir -p "$PROJECTS_DIR"
 
 # Function to print section headers
 section() {
