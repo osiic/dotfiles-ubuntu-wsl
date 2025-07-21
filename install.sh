@@ -25,7 +25,7 @@ section() {
 section "Updating system and installing basic packages"
 sudo add-apt-repository ppa:neovim-ppa/unstable
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl git tmux neovim unzip build-essential openssh-client wget zsh
+sudo apt install -y curl git tmux luarocks python3-pip ripgrep fd-find neovim unzip build-essential openssh-client wget zsh
 
 # Install Git and configure
 section "Configuring Git"
