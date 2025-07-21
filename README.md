@@ -24,6 +24,7 @@ git clone https://github.com/osiic/dotfiles-ubuntu-wsl.git
 cd dotfiles-ubuntu-wsl
 chmod +x install.sh
 ./install.sh
+git remote set-url origin git@github.com:osiic/dotfiles-ubuntu-wsl.git
 ```
 
 ## Uninstallation
