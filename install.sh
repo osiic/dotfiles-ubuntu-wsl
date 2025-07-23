@@ -10,7 +10,7 @@ NC='\033[0m'
 echo -e "${YELLOW}🚀 Starting WSL Ubuntu 24.04 setup for Node.js development...${NC}"
 
 # Create dotfiles directory
-DOTFILES_DIR="$HOME/dotfiles"
+DOTFILES_DIR="$HOME/.config/dotfiles"
 mkdir -p "$DOTFILES_DIR"
 # Create dotfiles directory
 PROJECTS_DIR="$HOME/projects"
@@ -34,14 +34,8 @@ cat > "$DOTFILES_DIR/.gitconfig" << 'EOL'
     email = osiic.offcl@gmail.com
     name = Osi ic
 [alias]
-    co = checkout
-    ci = commit
-    st = status
-    br = branch
-    hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
     type = cat-file -t
     dump = cat-file -p
-    lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
 [core]
     editor = nvim
     excludesfile = ~/.gitignore_global
@@ -125,14 +119,47 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 
-# Aliases
-alias ll='ls -alF'
+# === BASIC NAVIGATION ===
 alias ..='cd ..'
-alias gs='git status'
-alias ga='git add .'
-alias gc='git commit -m'
-alias gac='git add . && git commit -m'
+alias ..2='cd ../..'
+alias ..3='cd ../../..'
 alias dev='cd ~/projects'
+alias proj='cd ~/projects'
+alias c='clear'
+alias e='exit'
+
+# === FILE LISTING ===
+alias ll='ls -alF'
+alias la='ls -A'
+alias lt='ls -ltr'
+alias tree='tree -C -L 2'  # pastikan `tree` terinstall
+
+# === GIT COMMANDS ===
+alias gs='git branch && git status'
+alias gb='git branch'
+alias gbd='git branch -D'
+alias gc='git checkout'
+alias gco='git checkout'
+alias gcb='git checkout -b'
+alias gac='git add . && git commit -m'
+alias gca='git commit -am'
+alias gcm='git commit -m'
+alias gp='git push'
+alias gpl='git pull'
+alias gf='git fetch'
+alias gss='git status -s'
+alias glg='git log --color --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
+alias gcp='git cherry-pick'
+alias gsu='git submodule update --init --recursive'
+alias gr='git restore .'
+alias grs='git reset --soft HEAD~1'
+alias gm='git merge'
+
+# === TOOLS ===
+alias h='history'
+alias v='nvim'         # Ganti dengan `vim` jika tidak pakai neovim
+alias serve='python3 -m http.server 8000'
+alias s='source ~/.bashrc'  # Ganti dengan ~/.zshrc jika pakai ZSH
 
 # NVM
 export NVM_DIR="$HOME/.nvm"
@@ -140,6 +167,9 @@ export NVM_DIR="$HOME/.nvm"
 
 # Starship
 eval "$(starship init zsh)"
+
+# === CUSTOM STARTUP MESSAGE (Optional) ===
+echo "✅ Shell Loaded — Happy Coding, $USER!"
 EOL
 ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 
