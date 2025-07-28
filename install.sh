@@ -182,8 +182,7 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.
 section "Configuring Starship"
 git clone https://github.com/osiic/starship.git
 
-mkdir -p ~/.config
-cp ./startship/starship.toml ~/.config/starship.toml
+./startship/install.sh
 
 # 4. Add starship to your shell config
 echo 'eval "$(starship init bash)"' >> ~/.bashrc
