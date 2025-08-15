@@ -135,7 +135,7 @@ alias lt='ls -ltr'
 alias tree='tree -C -L 2'  # pastikan `tree` terinstall
 
 # === GIT COMMANDS ===
-alias gs='git branch && git status'
+alias gs='echo -e "\n\033[1;34m== Branches ==\033[0m" && git branch --sort=-committerdate --color=always && echo -e "\n\033[1;34m== Status ==\033[0m" && git status -sb --ahead-behind'
 alias gb='git branch'
 alias gbd='git branch -D'
 alias gc='git checkout'
