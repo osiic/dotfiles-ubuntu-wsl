@@ -168,8 +168,33 @@ export NVM_DIR="$HOME/.nvm"
 # Starship
 eval "$(starship init zsh)"
 
-# === CUSTOM STARTUP MESSAGE (Optional) ===
-echo "✅ Shell Loaded — Happy Coding, $USER!"
+# === CUSTOM STARTUP MESSAGE ===
+# Ambil informasi
+USER_HOST="${CYAN}$USER${RESET}@${CYAN}$(hostname)${RESET}"
+CURRENT_DATE=$(date +"%A, %d %B %Y %H:%M:%S")
+UPTIME=$(uptime -p)
+KERNEL=$(uname -r)
+CPU_LOAD=$(grep 'model name' /proc/cpuinfo | head -1 | cut -d ':' -f2 | xargs)
+MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 " / " $2}')
+DISK_USAGE=$(df -h / | awk 'NR==2 {print $3 " / " $2 " (" $5 ")"}')
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
+PACKAGES=$(dpkg -l | wc -l)
+
+# Tampilkan dashboard
+echo -e "${GREEN}╔════════════════════════════════════════════╗${RESET}"
+echo -e "${GREEN}║ ${YELLOW}👤 User & Host   :${RESET} $USER_HOST"
+echo -e "${GREEN}║ ${YELLOW}📅 Date & Time   :${RESET} $CURRENT_DATE"
+echo -e "${GREEN}║ ${YELLOW}⏳ Uptime        :${RESET} $UPTIME"
+echo -e "${GREEN}║ ${YELLOW}🖥  Kernel       :${RESET} $KERNEL"
+echo -e "${GREEN}║ ${YELLOW}⚡ CPU           :${RESET} $CPU_LOAD"
+echo -e "${GREEN}║ ${YELLOW}💾 Memory        :${RESET} $MEMORY_USAGE"
+echo -e "${GREEN}║ ${YELLOW}📂 Disk Usage    :${RESET} $DISK_USAGE"
+echo -e "${GREEN}║ ${YELLOW}🌐 IP Address    :${RESET} $IP_ADDRESS"
+echo -e "${GREEN}║ ${YELLOW}📦 Packages      :${RESET} $PACKAGES installed"
+echo -e "${GREEN}╚════════════════════════════════════════════╝${RESET}"
+
+# Tambahkan separator
+echo ""
 EOL
 ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 
