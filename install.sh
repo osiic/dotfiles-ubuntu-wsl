@@ -90,11 +90,11 @@ sudo apt install -y --no-install-recommends \
     software-properties-common apt-transport-https ca-certificates \
     build-essential cmake pkg-config libssl-dev libffi-dev \
     zlib1g-dev liblzma-dev libreadline-dev libbz2-dev \
-    libsqlite3-dev libncurses5-dev libncursesw5-dev \
+    libsqlite3-dev libncurses-dev \
     xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm \
     git curl wget jq htop unzip zip tar gzip bzip2 \
-    ripgrep fd-find bat exa neovim python3-pip \
-    openssh-client gnupg2 net-tools tree
+    ripgrep fd-find bat neovim python3-pip \
+    openssh-client gnupg2 net-tools tree
 
 # ==============================================
 # DEVELOPMENT TOOLS
