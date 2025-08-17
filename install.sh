@@ -269,7 +269,7 @@ export TERM="xterm-256color"
 export BAT_THEME="Dracula"
 
 # ===== Aliases =====
-alias ls=" --group-directories-first"
+alias ls="exa --group-directories-first"
 alias ll="exa -alF --group-directories-first --git"
 alias lt="exa -T --group-directories-first --git-ignore"
 alias cat="bat --paging=never"
