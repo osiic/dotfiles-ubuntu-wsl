@@ -94,7 +94,7 @@ sudo apt install -y --no-install-recommends \
     xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm \
     git curl wget jq htop unzip zip tar gzip bzip2 \
     ripgrep fd-find bat neovim python3-pip \
-    openssh-client gnupg2 net-tools tree
+    openssh-client
 
 # ==============================================
 # DEVELOPMENT TOOLS
