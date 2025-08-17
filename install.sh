@@ -144,12 +144,19 @@ else
 fi
 
 # Python setup
+# Python setup
 section "Python Environment"
-if ! command_exists python; then
-    sudo apt install -y python3 python3-pip python3-venv
+if ! command_exists python3; then
+    sudo apt install -y python3 python3-pip python3-venv python3-full
 fi
-pip3 install --upgrade pip setuptools wheel
-pip3 install --user virtualenv pipx
+
+# Upgrade pip dalam venv
+python3 -m venv ~/.venvs/default
+source ~/.venvs/default/bin/activate
+
+pip install --upgrade pip setuptools wheel
+pip install virtualenv pipx
+pipx ensurepath
 
 # ==============================================
 # SHELL ENVIRONMENT
