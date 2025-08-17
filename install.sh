@@ -143,17 +143,30 @@ else
     echo -e "${YELLOW}Node.js already installed${NC}"
 fi
 
-# Python setup
-# Python setup
-section "Python Environment"
-if ! command_exists python3; then
+# ==================================
+# PYTHON ENVIRONMENT
+# ==================================
+
+section "PYTHON ENVIRONMENT"
+
+# Pastikan python3 ada
+if ! command -v python3 &>/dev/null; then
+    sudo apt update
     sudo apt install -y python3 python3-pip python3-venv python3-full
 fi
 
-# Upgrade pip dalam venv
+# Deteksi versi Python (misalnya 3.12)
+PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+
+# Install paket venv untuk versi Python yang sesuai
+sudo apt install -y "python${PY_VER}-venv"
+
+# Buat virtual environment default
+rm -rf ~/.venvs/default
 python3 -m venv ~/.venvs/default
 source ~/.venvs/default/bin/activate
 
+# Upgrade pip & install tools
 pip install --upgrade pip setuptools wheel
 pip install virtualenv pipx
 pipx ensurepath
