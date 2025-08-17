@@ -102,8 +102,8 @@ mkdir -p ~/.cache/{zsh,nvim}
 
 # Update system
 section "Updating System"
+sudo add-apt-repository -y ppa:neovim-ppa/unstable
 sudo apt update && sudo apt upgrade -y
-sudo add-apt-repository ppa:neovim-ppa/unstable
 sudo apt autoremove -y
 
 # Install essential packages
