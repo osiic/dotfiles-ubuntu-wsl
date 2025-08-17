@@ -68,6 +68,27 @@ if [[ "$confirm" != "y" ]]; then
 fi
 
 # ==============================================
+# SSH CONFIGURATION
+# ==============================================
+
+section "SSH Setup"
+
+if [ ! -f ~/.ssh/id_ed25519 ]; then
+    echo -e "${YELLOW}Generating SSH key...${NC}"
+    ssh-keygen -t ed25519 -C "$USER_EMAIL" -f ~/.ssh/id_ed25519 -N ""
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_ed25519
+    
+    echo -e "\n${GREEN}🔑 Public SSH Key:${NC}"
+    cat ~/.ssh/id_ed25519.pub
+    echo -e "\n${YELLOW}Please add this key to your GitHub account:${NC}"
+    echo -e "https://github.com/settings/keys\n"
+    read -p "Press Enter to continue after adding the key..."
+else
+    echo -e "${YELLOW}SSH key already exists${NC}"
+fi
+
+# ==============================================
 # SYSTEM SETUP
 # ==============================================
 
@@ -82,6 +103,7 @@ mkdir -p ~/.cache/{zsh,nvim}
 # Update system
 section "Updating System"
 sudo apt update && sudo apt upgrade -y
+sudo add-apt-repository ppa:neovim-ppa/unstable
 sudo apt autoremove -y
 
 # Install essential packages
@@ -90,10 +112,10 @@ sudo apt install -y --no-install-recommends \
     software-properties-common apt-transport-https ca-certificates \
     build-essential cmake pkg-config libssl-dev libffi-dev \
     zlib1g-dev liblzma-dev libreadline-dev libbz2-dev \
-    libsqlite3-dev libncurses-dev \
+    libsqlite3-dev libncurses-dev eza \
     xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm \
     git curl wget jq htop unzip zip tar gzip bzip2 \
-    ripgrep fd-find bat neovim python3-pip \
+    ripgrep fd-find neovim tmux luarocks python3-pip \
     openssh-client
 
 # ==============================================
@@ -186,7 +208,22 @@ fi
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     echo -e "${YELLOW}Installing Oh My Zsh...${NC}"
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    chsh -s $(which zsh)
+    sudo chsh -s "$(which zsh)" "$USER"
+fi
+
+# Neovim config
+if [ ! -d "$HOME/.config/nvim" ]; then
+    git clone https://github.com/osiic/nvim.git "$HOME/.config/nvim"
+else
+    echo -e "${YELLOW}Neovim config already exists. Skipping...${NC}"
+fi
+
+# Tmux config
+if [ ! -d "$HOME/.tmux" ]; then
+    git clone https://github.com/osiic/tmux.git "$HOME/.tmux"
+    ln -sf "$HOME/.tmux/.tmux.conf" "$HOME/.tmux.conf"
+else
+    echo -e "${YELLOW}Tmux config already exists. Skipping...${NC}"
 fi
 
 # Install Starship prompt
@@ -232,10 +269,10 @@ export TERM="xterm-256color"
 export BAT_THEME="Dracula"
 
 # ===== Aliases =====
-alias ls="exa --group-directories-first"
+alias ls=" --group-directories-first"
 alias ll="exa -alF --group-directories-first --git"
 alias lt="exa -T --group-directories-first --git-ignore"
-alias cat="bat"
+alias cat="bat --paging=never"
 alias grep="rg"
 alias find="fd"
 alias v="nvim"
@@ -254,31 +291,54 @@ EOL
 
 # Starship configuration
 cat > ~/.config/starship.toml << 'EOL'
-format = """
-$username\
-$hostname\
-$directory\
-$git_branch\
-$git_status\
-$cmd_duration\
-$line_break\
-$character"""
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
 
+# Sets user-defined palette
+# Palettes must be defined _after_ this line
+palette = "catppuccin_mocha"
+
+# Starship modules
 [character]
-success_symbol = "[➜](bold green)"
-error_symbol = "[➜](bold red)"
-
-[directory]
-truncation_length = 3
-truncation_symbol = "…/"
-style = "bold blue"
+# Note the use of Catppuccin color 'peach'
+success_symbol = "[[󰄛](green) ❯](peach)"
+error_symbol = "[[󰄛](red) ❯](peach)"
+vimcmd_symbol = "[󰄛 ❮](subtext1)" # For use with zsh-vi-mode
 
 [git_branch]
-symbol = "🌱 "
-style = "bold purple"
+style = "bold mauve"
 
-[git_status]
-style = "bold green"
+[directory]
+truncation_length = 4
+style = "bold lavender"
+
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
+red = "#f38ba8"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext1 = "#bac2de"
+subtext0 = "#a6adc8"
+overlay2 = "#9399b2"
+overlay1 = "#7f849c"
+overlay0 = "#6c7086"
+surface2 = "#585b70"
+surface1 = "#45475a"
+surface0 = "#313244"
+base = "#1e1e2e"
+mantle = "#181825"
+crust = "#11111b"
 EOL
 
 # ==============================================
@@ -312,34 +372,11 @@ if ! command_exists tldr; then
 fi
 
 # ==============================================
-# SSH CONFIGURATION
-# ==============================================
-
-section "SSH Setup"
-
-if [ ! -f ~/.ssh/id_ed25519 ]; then
-    echo -e "${YELLOW}Generating SSH key...${NC}"
-    ssh-keygen -t ed25519 -C "$USER_EMAIL" -f ~/.ssh/id_ed25519 -N ""
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_ed25519
-    
-    echo -e "\n${GREEN}🔑 Public SSH Key:${NC}"
-    cat ~/.ssh/id_ed25519.pub
-    echo -e "\n${YELLOW}Please add this key to your GitHub account:${NC}"
-    echo -e "https://github.com/settings/keys\n"
-    read -p "Press Enter to continue after adding the key..."
-else
-    echo -e "${YELLOW}SSH key already exists${NC}"
-fi
-
-# ==============================================
 # FINAL SETUP
 # ==============================================
 
-section "Final Configuration"
-
 # Create welcome message
-cat > ~/.config/welcome.txt << EOL
+cat > ~/welcome.txt << EOL
 ╔════════════════════════════════════════════╗
 ║   🎉 WSL Development Environment Ready!    ║
 ╚════════════════════════════════════════════╝
@@ -370,6 +407,6 @@ section "Setup Complete"
 echo -e "${GREEN}✅ Development environment setup successfully!${NC}"
 echo -e "\n${YELLOW}Next steps:${NC}"
 echo -e "1. Restart your shell: ${GREEN}exec zsh${NC}"
-echo -e "2. View welcome message: ${GREEN}cat ~/.config/welcome.txt${NC}"
+echo -e "2. View welcome message: ${GREEN}cat ~/welcome.txt${NC}"
 echo -e "3. Start developing in ~/projects directory"
 echo -e "\n${BLUE}Happy coding! 🎉${NC}"
