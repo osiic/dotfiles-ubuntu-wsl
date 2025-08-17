@@ -116,7 +116,7 @@ sudo apt install -y --no-install-recommends \
     xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm \
     git curl wget jq htop unzip zip tar gzip bzip2 \
     ripgrep fd-find neovim tmux luarocks python3-pip \
-    openssh-client
+    openssh-client xclip xsel wl-clipboard
 
 # ==============================================
 # DEVELOPMENT TOOLS
