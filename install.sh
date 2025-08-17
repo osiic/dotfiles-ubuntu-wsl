@@ -308,6 +308,7 @@ if [ ! -f ~/.ssh/id_ed25519 ]; then
     echo -e "\n${YELLOW}Please add this key to your GitHub account:${NC}"
     echo -e "https://github.com/settings/keys\n"
     read -p "Press Enter to continue after adding the key..."
+    ssh -T git@github.com
 else
     echo -e "${YELLOW}SSH key already exists${NC}"
 fi
