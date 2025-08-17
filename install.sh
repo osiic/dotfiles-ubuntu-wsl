@@ -112,7 +112,7 @@ sudo apt install -y --no-install-recommends \
     software-properties-common apt-transport-https ca-certificates \
     build-essential cmake pkg-config libssl-dev libffi-dev \
     zlib1g-dev liblzma-dev libreadline-dev libbz2-dev \
-    libsqlite3-dev libncurses-dev eza \
+    libsqlite3-dev libncurses-dev eza bat \
     xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm \
     git curl wget jq htop unzip zip tar gzip bzip2 \
     ripgrep fd-find neovim tmux luarocks python3-pip \
