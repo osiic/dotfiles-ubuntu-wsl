@@ -281,6 +281,27 @@ alias d="docker"
 alias dc="docker-compose"
 alias sz="source ~/.zshrc"
 
+# === GIT COMMANDS ===
+alias gs='echo -e "\n\033[1;34m== Branches ==\033[0m" && git branch --sort=-committerdate --color=always && echo -e "\n\033[1;34m== Status ==\033[0m" && git status -sb --ahead-behind'
+alias gb='git branch'
+alias gbd='git branch -D'
+alias gc='git checkout'
+alias gco='git checkout'
+alias gcb='git checkout -b'
+alias gac='git add . && git commit -m'
+alias gca='git commit -am'
+alias gcm='git commit -m'
+alias gp='git push'
+alias gpl='git pull'
+alias gf='git fetch'
+alias gss='git status -s'
+alias glg='git log --color --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
+alias gcp='git cherry-pick'
+alias gsu='git submodule update --init --recursive'
+alias gr='git restore .'
+alias grs='git reset --soft HEAD~1'
+alias gm='git merge'
+
 # ===== Tool Initializations =====
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
