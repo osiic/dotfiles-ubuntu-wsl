@@ -1,138 +1,285 @@
 #!/bin/bash
 set -e
 
+# ==============================================
+# WSL UBUNTU DEVELOPMENT ENVIRONMENT SETUP SCRIPT
+# Compatible with all Ubuntu LTS versions
+# ==============================================
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m'
-
-echo -e "${YELLOW}🚀 Starting WSL Ubuntu 24.04 setup for Node.js development...${NC}"
-
-# Create dotfiles directory
-DOTFILES_DIR="$HOME/.config/dotfiles"
-mkdir -p "$DOTFILES_DIR"
-# Create dotfiles directory
-PROJECTS_DIR="$HOME/projects"
-mkdir -p "$PROJECTS_DIR"
 
 # Function to print section headers
 section() {
-    echo -e "\n${GREEN}=== $1 ===${NC}"
+    echo -e "\n${BLUE}==================================${NC}"
+    echo -e "${BLUE}>>> ${GREEN}$1${NC}"
+    echo -e "${BLUE}==================================${NC}"
 }
 
-# Update and install basic packages
-section "Updating system and installing basic packages"
-sudo add-apt-repository ppa:neovim-ppa/unstable
+# Function to install package if not exists
+install_package() {
+    if ! dpkg -l | grep -q "$1"; then
+        echo -e "${YELLOW}[INSTALL]${NC} $1..."
+        sudo apt install -y "$1"
+    else
+        echo -e "${YELLOW}[SKIP]${NC} $1 already installed"
+    fi
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# ==============================================
+# INITIAL SETUP
+# ==============================================
+
+echo -e "${BLUE}╔════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║${CYAN}   🚀 WSL Ubuntu Development Setup Script   ${BLUE}║${NC}"
+echo -e "${BLUE}║${MAGENTA}       For All Ubuntu LTS Versions        ${BLUE}║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
+
+# Ask for sudo password once
+echo -e "\n${YELLOW}🔑 Please enter your sudo password when prompted...${NC}"
+sudo -v
+
+# Get user info
+section "User Configuration"
+read -p "Enter your full name: " USER_NAME
+read -p "Enter your email address: " USER_EMAIL
+read -p "Enter your GitHub username: " GITHUB_USER
+
+# Verify information
+echo -e "\n${YELLOW}Please verify your information:${NC}"
+echo -e "Name    : ${GREEN}$USER_NAME${NC}"
+echo -e "Email   : ${GREEN}$USER_EMAIL${NC}"
+echo -e "GitHub  : ${GREEN}$GITHUB_USER${NC}"
+read -p "Is this correct? (y/n): " confirm
+if [[ "$confirm" != "y" ]]; then
+    echo -e "${RED}❌ Setup aborted. Please run the script again.${NC}"
+    exit 1
+fi
+
+# ==============================================
+# SSH CONFIGURATION
+# ==============================================
+
+section "SSH Setup"
+
+if [ ! -f ~/.ssh/id_ed25519 ]; then
+    echo -e "${YELLOW}Generating SSH key...${NC}"
+    ssh-keygen -t ed25519 -C "$USER_EMAIL" -f ~/.ssh/id_ed25519 -N ""
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_ed25519
+    
+    echo -e "\n${GREEN}🔑 Public SSH Key:${NC}"
+    cat ~/.ssh/id_ed25519.pub
+    echo -e "\n${YELLOW}Please add this key to your GitHub account:${NC}"
+    echo -e "https://github.com/settings/keys\n"
+    read -p "Press Enter to continue after adding the key..."
+else
+    echo -e "${YELLOW}SSH key already exists${NC}"
+fi
+
+# ==============================================
+# SYSTEM SETUP
+# ==============================================
+
+section "System Configuration"
+
+# Create directories
+echo -e "${YELLOW}Creating directory structure...${NC}"
+mkdir -p ~/{projects,tools,scripts,.config}
+mkdir -p ~/.local/{bin,share,lib}
+mkdir -p ~/.cache/{zsh,nvim}
+
+# Update system
+section "Updating System"
+sudo add-apt-repository -y ppa:neovim-ppa/unstable
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl git tmux luarocks python3-pip ripgrep fd-find neovim unzip build-essential openssh-client wget zsh
+sudo apt autoremove -y
 
-# Install Git and configure
-section "Configuring Git"
-cat > "$DOTFILES_DIR/.gitconfig" << 'EOL'
-[user]
-    email = osiic.offcl@gmail.com
-    name = Osi ic
-[alias]
-    type = cat-file -t
-    dump = cat-file -p
-[core]
-    editor = nvim
-    excludesfile = ~/.gitignore_global
-[push]
-    default = current
-[pull]
-    rebase = true
-EOL
-ln -sf "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+# Install essential packages
+section "Installing Base Packages"
+sudo apt install -y --no-install-recommends \
+    software-properties-common apt-transport-https ca-certificates \
+    build-essential cmake pkg-config libssl-dev libffi-dev \
+    zlib1g-dev liblzma-dev libreadline-dev libbz2-dev \
+    libsqlite3-dev libncurses-dev eza bat \
+    xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm \
+    git curl wget jq htop unzip zip tar gzip bzip2 \
+    ripgrep fd-find neovim tmux luarocks python3-pip \
+    openssh-client xclip xsel wl-clipboard
 
-# Install NVM and Node.js LTS
-section "Installing NVM and Node.js"
-export NVM_DIR="$HOME/.nvm"
-if [ ! -d "$NVM_DIR" ]; then
+# ==============================================
+# DEVELOPMENT TOOLS
+# ==============================================
+
+section "Development Tools Setup"
+
+# Git configuration
+echo -e "${YELLOW}Configuring Git...${NC}"
+git config --global user.name "$USER_NAME"
+git config --global user.email "$USER_EMAIL"
+git config --global core.editor "nvim"
+git config --global init.defaultBranch "main"
+git config --global pull.rebase true
+git config --global alias.co checkout
+git config --global alias.br branch
+git config --global alias.ci commit
+git config --global alias.st status
+git config --global alias.unstage 'reset HEAD --'
+git config --global alias.last 'log -1 HEAD'
+git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
+
+# Install GitHub CLI
+if ! command_exists gh; then
+    echo -e "${YELLOW}Installing GitHub CLI...${NC}"
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install -y gh
+fi
+
+# Node.js via NVM
+section "Node.js Environment"
+if [ ! -d "$HOME/.nvm" ]; then
+    echo -e "${YELLOW}Installing NVM...${NC}"
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    
+    echo -e "${YELLOW}Installing Node.js LTS...${NC}"
     nvm install --lts
     nvm alias default 'lts/*'
+    npm install -g npm yarn pnpm bun
+    npm install -g typescript ts-node nodemon eslint prettier
 else
-    echo -e "${YELLOW}NVM already installed. Skipping...${NC}"
+    echo -e "${YELLOW}Node.js already installed${NC}"
 fi
 
-# Generate SSH key
-section "Generating SSH key"
-mkdir -p "$HOME/.ssh"
-if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
-  ssh-keygen -t ed25519 -C "osiic.offcl@gmail.com" -f "$HOME/.ssh/id_ed25519" -N ""
-  eval "$(ssh-agent -s)"
-  ssh-add "$HOME/.ssh/id_ed25519"
-  echo -e "${GREEN}🔑 Public SSH key (add this to GitHub):${NC}"
-  cat "$HOME/.ssh/id_ed25519.pub"
-  echo -e "${YELLOW}📤 Silakan upload kunci ini ke GitHub (Settings > SSH and GPG keys)...${NC}"
-  read -p "Tekan [Enter] setelah kamu selesai upload ke GitHub..."
-else
-  echo -e "${YELLOW}✅ SSH key sudah ada. Melewati proses generate...${NC}"
+# ==================================
+# PYTHON ENVIRONMENT
+# ==================================
+
+section "PYTHON ENVIRONMENT"
+
+# Pastikan python3 ada
+if ! command -v python3 &>/dev/null; then
+    sudo apt update
+    sudo apt install -y python3 python3-pip python3-venv python3-full
 fi
 
-# Install Starship prompt
-section "Installing Starship prompt"
-if ! command -v starship &> /dev/null; then
-    curl -sS https://starship.rs/install.sh | sh -s -- -y
-else
-    echo -e "${YELLOW}Starship already installed. Skipping...${NC}"
-fi
+# Deteksi versi Python (misalnya 3.12)
+PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+
+# Install paket venv untuk versi Python yang sesuai
+sudo apt install -y "python${PY_VER}-venv"
+
+# Buat virtual environment default
+rm -rf ~/.venvs/default
+python3 -m venv ~/.venvs/default
+source ~/.venvs/default/bin/activate
+
+# Upgrade pip & install tools
+pip install --upgrade pip setuptools wheel
+pip install virtualenv pipx
+pipx ensurepath
+
+# ==============================================
+# SHELL ENVIRONMENT
+# ==============================================
+
+section "Shell Configuration"
 
 # Install Zsh and Oh My Zsh
-section "Installing Zsh and Oh My Zsh"
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    chsh -s $(which zsh)
-else
-    echo -e "${YELLOW}Oh My Zsh already installed. Skipping...${NC}"
+if ! command_exists zsh; then
+    echo -e "${YELLOW}Installing Zsh...${NC}"
+    sudo apt install -y zsh
 fi
 
-# Clone configuration repos
-section "Cloning configuration repositories"
-mkdir -p "$HOME/.config"
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    echo -e "${YELLOW}Installing Oh My Zsh...${NC}"
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    sudo chsh -s "$(which zsh)" "$USER"
+fi
 
 # Neovim config
 if [ ! -d "$HOME/.config/nvim" ]; then
-    git clone git@github.com:osiic/nvim.git "$HOME/.config/nvim"
+    git clone https://github.com/osiic/nvim.git "$HOME/.config/nvim"
 else
     echo -e "${YELLOW}Neovim config already exists. Skipping...${NC}"
 fi
 
 # Tmux config
 if [ ! -d "$HOME/.tmux" ]; then
-    git clone git@github.com:osiic/tmux.git "$HOME/.tmux"
+    git clone https://github.com/osiic/tmux.git "$HOME/.tmux"
     ln -sf "$HOME/.tmux/.tmux.conf" "$HOME/.tmux.conf"
 else
     echo -e "${YELLOW}Tmux config already exists. Skipping...${NC}"
 fi
 
-# Configure Zsh
-section "Configuring Zsh"
-cat > "$DOTFILES_DIR/.zshrc" << 'EOL'
+# Install Starship prompt
+if ! command_exists starship; then
+    echo -e "${YELLOW}Installing Starship...${NC}"
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+fi
+
+# Zsh plugins
+echo -e "${YELLOW}Setting up Zsh plugins...${NC}"
+ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
+git clone https://github.com/agkozak/zsh-z ${ZSH_CUSTOM}/plugins/zsh-z
+
+# Zsh configuration
+echo -e "${YELLOW}Configuring Zsh...${NC}"
+cat > ~/.zshrc << 'EOL'
+# ===== Oh My Zsh Configuration =====
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
 
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(
+    git
+    docker
+    npm
+    yarn
+    node
+    nvm
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+    zsh-z
+)
 
 source $ZSH/oh-my-zsh.sh
 
-# === BASIC NAVIGATION ===
-alias ..='cd ..'
-alias ..2='cd ../..'
-alias ..3='cd ../../..'
-alias dev='cd ~/projects'
-alias proj='cd ~/projects'
-alias c='clear'
-alias e='exit'
+# ===== Environment Variables =====
+export PATH="$HOME/.local/bin:$PATH"
+export EDITOR="nvim"
+export VISUAL="nvim"
+export PAGER="less"
+export TERM="xterm-256color"
+export BAT_THEME="Dracula"
 
-# === FILE LISTING ===
-alias ll='ls -alF'
-alias la='ls -A'
-alias lt='ls -ltr'
-alias tree='tree -C -L 2'  # pastikan `tree` terinstall
+# ===== Aliases =====
+alias ls="exa --group-directories-first"
+alias ll="exa -alF --group-directories-first --git"
+alias lt="exa -T --group-directories-first --git-ignore"
+alias cat="batcat --paging=never"
+alias grep="rg"
+alias find="fd"
+alias v="nvim"
+alias g="git"
+alias d="docker"
+alias dc="docker-compose"
+alias sz="source ~/.zshrc"
 
 # === GIT COMMANDS ===
 alias gs='echo -e "\n\033[1;34m== Branches ==\033[0m" && git branch --sort=-committerdate --color=always && echo -e "\n\033[1;34m== Status ==\033[0m" && git status -sb --ahead-behind'
@@ -155,58 +302,16 @@ alias gr='git restore .'
 alias grs='git reset --soft HEAD~1'
 alias gm='git merge'
 
-# === TOOLS ===
-alias h='history'
-alias v='nvim'         # Ganti dengan `vim` jika tidak pakai neovim
-alias serve='python3 -m http.server 8000'
-alias s='source ~/.bashrc'  # Ganti dengan ~/.zshrc jika pakai ZSH
-
-# NVM
+# ===== Tool Initializations =====
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-# Starship
 eval "$(starship init zsh)"
-
-# === CUSTOM STARTUP MESSAGE ===
-# Ambil informasi
-USER_HOST="${CYAN}$USER${RESET}@${CYAN}$(hostname)${RESET}"
-CURRENT_DATE=$(date +"%A, %d %B %Y %H:%M:%S")
-UPTIME=$(uptime -p)
-KERNEL=$(uname -r)
-CPU_LOAD=$(grep 'model name' /proc/cpuinfo | head -1 | cut -d ':' -f2 | xargs)
-MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 " / " $2}')
-DISK_USAGE=$(df -h / | awk 'NR==2 {print $3 " / " $2 " (" $5 ")"}')
-IP_ADDRESS=$(hostname -I | awk '{print $1}')
-PACKAGES=$(dpkg -l | wc -l)
-
-# Tampilkan dashboard
-echo -e "${GREEN}╔════════════════════════════════════════════╗${RESET}"
-echo -e "${GREEN}║ ${YELLOW}👤 User & Host   :${RESET} $USER_HOST"
-echo -e "${GREEN}║ ${YELLOW}📅 Date & Time   :${RESET} $CURRENT_DATE"
-echo -e "${GREEN}║ ${YELLOW}⏳ Uptime        :${RESET} $UPTIME"
-echo -e "${GREEN}║ ${YELLOW}🖥  Kernel       :${RESET} $KERNEL"
-echo -e "${GREEN}║ ${YELLOW}⚡ CPU           :${RESET} $CPU_LOAD"
-echo -e "${GREEN}║ ${YELLOW}💾 Memory        :${RESET} $MEMORY_USAGE"
-echo -e "${GREEN}║ ${YELLOW}📂 Disk Usage    :${RESET} $DISK_USAGE"
-echo -e "${GREEN}║ ${YELLOW}🌐 IP Address    :${RESET} $IP_ADDRESS"
-echo -e "${GREEN}║ ${YELLOW}📦 Packages      :${RESET} $PACKAGES installed"
-echo -e "${GREEN}╚════════════════════════════════════════════╝${RESET}"
-
-# Tambahkan separator
-echo ""
 EOL
-ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 
-# Install Zsh plugins
-section "Installing Zsh plugins"
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-
-# Create basic Starship config
-section "Configuring Starship"
-mkdir -p "$HOME/.config"
-cat > "$HOME/.config/starship.toml" << 'EOL'
+# Starship configuration
+cat > ~/.config/starship.toml << 'EOL'
 # Get editor completions based on the config schema
 "$schema" = 'https://starship.rs/config-schema.json'
 
@@ -227,91 +332,6 @@ style = "bold mauve"
 [directory]
 truncation_length = 4
 style = "bold lavender"
-
-# Palette definitions
-[palettes.catppuccin_latte]
-rosewater = "#dc8a78"
-flamingo = "#dd7878"
-pink = "#ea76cb"
-mauve = "#8839ef"
-red = "#d20f39"
-maroon = "#e64553"
-peach = "#fe640b"
-yellow = "#df8e1d"
-green = "#40a02b"
-teal = "#179299"
-sky = "#04a5e5"
-sapphire = "#209fb5"
-blue = "#1e66f5"
-lavender = "#7287fd"
-text = "#4c4f69"
-subtext1 = "#5c5f77"
-subtext0 = "#6c6f85"
-overlay2 = "#7c7f93"
-overlay1 = "#8c8fa1"
-overlay0 = "#9ca0b0"
-surface2 = "#acb0be"
-surface1 = "#bcc0cc"
-surface0 = "#ccd0da"
-base = "#eff1f5"
-mantle = "#e6e9ef"
-crust = "#dce0e8"
-
-[palettes.catppuccin_frappe]
-rosewater = "#f2d5cf"
-flamingo = "#eebebe"
-pink = "#f4b8e4"
-mauve = "#ca9ee6"
-red = "#e78284"
-maroon = "#ea999c"
-peach = "#ef9f76"
-yellow = "#e5c890"
-green = "#a6d189"
-teal = "#81c8be"
-sky = "#99d1db"
-sapphire = "#85c1dc"
-blue = "#8caaee"
-lavender = "#babbf1"
-text = "#c6d0f5"
-subtext1 = "#b5bfe2"
-subtext0 = "#a5adce"
-overlay2 = "#949cbb"
-overlay1 = "#838ba7"
-overlay0 = "#737994"
-surface2 = "#626880"
-surface1 = "#51576d"
-surface0 = "#414559"
-base = "#303446"
-mantle = "#292c3c"
-crust = "#232634"
-
-[palettes.catppuccin_macchiato]
-rosewater = "#f4dbd6"
-flamingo = "#f0c6c6"
-pink = "#f5bde6"
-mauve = "#c6a0f6"
-red = "#ed8796"
-maroon = "#ee99a0"
-peach = "#f5a97f"
-yellow = "#eed49f"
-green = "#a6da95"
-teal = "#8bd5ca"
-sky = "#91d7e3"
-sapphire = "#7dc4e4"
-blue = "#8aadf4"
-lavender = "#b7bdf8"
-text = "#cad3f5"
-subtext1 = "#b8c0e0"
-subtext0 = "#a5adcb"
-overlay2 = "#939ab7"
-overlay1 = "#8087a2"
-overlay0 = "#6e738d"
-surface2 = "#5b6078"
-surface1 = "#494d64"
-surface0 = "#363a4f"
-base = "#24273a"
-mantle = "#1e2030"
-crust = "#181926"
 
 [palettes.catppuccin_mocha]
 rosewater = "#f5e0dc"
@@ -342,10 +362,72 @@ mantle = "#181825"
 crust = "#11111b"
 EOL
 
-# Final steps
-section "Finishing setup"
-echo -e "${GREEN}✅ Setup complete!${NC}"
-echo -e "\nNext steps:"
-echo -e "1. Add your SSH key to GitHub: https://github.com/settings/keys"
-echo -e "2. Restart your shell: ${YELLOW}exec zsh${NC}"
-echo -e "3. Start coding! 🎉"
+# ==============================================
+# DEVELOPMENT TOOLS
+# ==============================================
+
+section "Additional Development Tools"
+
+# Install fzf
+if [ ! -d ~/.fzf ]; then
+    echo -e "${YELLOW}Installing fzf...${NC}"
+    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    ~/.fzf/install --all --no-update-rc
+fi
+
+# Install lazygit
+if ! command_exists lazygit; then
+    echo -e "${YELLOW}Installing lazygit...${NC}"
+    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+    tar xf lazygit.tar.gz lazygit
+    sudo install lazygit /usr/local/bin
+    rm lazygit.tar.gz lazygit
+fi
+
+# Install tldr
+if ! command_exists tldr; then
+    echo -e "${YELLOW}Installing tldr...${NC}"
+    sudo apt install -y tldr
+    tldr --update
+fi
+
+# ==============================================
+# FINAL SETUP
+# ==============================================
+
+# Create welcome message
+cat > ~/welcome.txt << EOL
+╔════════════════════════════════════════════╗
+║   🎉 WSL Development Environment Ready!    ║
+╚════════════════════════════════════════════╝
+
+Your environment has been configured with:
+
+• Git: $(git --version | cut -d' ' -f3)
+• Node.js: $(node --version)
+• npm: $(npm --version)
+• Python: $(python3 --version | cut -d' ' -f2)
+• Neovim: $(nvim --version | head -n1 | cut -d' ' -f2)
+
+Quick Start:
+- Projects: ~/projects
+- Edit files: v filename
+- Git status: g st
+- Docker containers: d ps
+
+Run 'tldr <command>' for simplified help
+EOL
+
+# ==============================================
+# COMPLETION
+# ==============================================
+
+section "Setup Complete"
+
+echo -e "${GREEN}✅ Development environment setup successfully!${NC}"
+echo -e "\n${YELLOW}Next steps:${NC}"
+echo -e "1. Restart your shell: ${GREEN}exec zsh${NC}"
+echo -e "2. View welcome message: ${GREEN}cat ~/welcome.txt${NC}"
+echo -e "3. Start developing in ~/projects directory"
+echo -e "\n${BLUE}Happy coding! 🎉${NC}"
