@@ -22,66 +22,152 @@ section() {
     echo -e "${BLUE}==================================${NC}"
 }
 
-# Function to check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Function to safely remove directory
-safe_remove_dir() {
-    if [ -d "$1" ]; then
-        echo -e "${YELLOW}[REMOVE]${NC} Removing directory: $1"
-        rm -rf "$1"
-    else
-        echo -e "${YELLOW}[SKIP]${NC} Directory not found: $1"
-    fi
-}
-
-# Function to safely remove file
-safe_remove_file() {
-    if [ -f "$1" ]; then
-        echo -e "${YELLOW}[REMOVE]${NC} Removing file: $1"
-        rm -f "$1"
-    else
-        echo -e "${YELLOW}[SKIP]${NC} File not found: $1"
-    fi
+# Function to ask yes/no question
+ask_yes_no() {
+    while true; do
+        read -p "$1 (y/n): " yn
+        case $yn in
+            [Yy]* ) return 0;;
+            [Nn]* ) return 1;;
+            * ) echo "Please answer yes (y) or no (n).";;
+        esac
+    done
 }
 
 # Function to remove package if exists
 remove_package() {
     if dpkg -l | grep -q "$1"; then
-        echo -e "${YELLOW}[REMOVE]${NC} Removing package: $1"
-        sudo apt remove -y "$1"
+        echo -e "${YELLOW}[REMOVE]${NC} $1..."
+        sudo apt remove --purge -y "$1"
     else
-        echo -e "${YELLOW}[SKIP]${NC} Package not installed: $1"
+        echo -e "${YELLOW}[SKIP]${NC} $1 not installed"
     fi
 }
 
 # ==============================================
-# INITIAL WARNING
+# INITIAL CONFIRMATION
 # ==============================================
 
 echo -e "${RED}╔════════════════════════════════════════════╗${NC}"
-echo -e "${RED}║${YELLOW}   ⚠️  WSL Development Environment Uninstall   ${RED}║${NC}"
-echo -e "${RED}║${MAGENTA}          This will remove ALL components     ${RED}║${NC}"
+echo -e "${RED}║${CYAN}   🗑️  WSL Ubuntu Development Uninstaller    ${RED}║${NC}"
+echo -e "${RED}║${MAGENTA}        Remove Development Environment      ${RED}║${NC}"
 echo -e "${RED}╚════════════════════════════════════════════╝${NC}"
 
-echo -e "\n${RED}⚠️  WARNING: This script will remove:${NC}"
-echo -e "• All development tools (Node.js, Python packages, etc.)"
-echo -e "• Shell configurations (Zsh, Oh My Zsh, Starship)"
-echo -e "• Git configuration"
-echo -e "• SSH keys (with confirmation)"
-echo -e "• Project directories and configurations"
-echo -e "• Installed packages and tools"
+echo -e "\n${RED}⚠️  WARNING: This will remove development tools and configurations!${NC}"
+if ! ask_yes_no "Are you sure you want to continue with uninstallation?"; then
+    echo -e "${GREEN}✅ Uninstallation cancelled.${NC}"
+    exit 0
+fi
 
-echo -e "\n${YELLOW}What will NOT be removed:${NC}"
-echo -e "• System packages (build-essential, git, curl, etc.)"
-echo -e "• Your personal files outside development directories"
-echo -e "• System-wide configurations"
+# ==============================================
+# COLLECT UNINSTALL PREFERENCES
+# ==============================================
 
-read -p $'\n'"${RED}Are you sure you want to proceed? Type 'YES' to continue: ${NC}" confirm
-if [[ "$confirm" != "YES" ]]; then
-    echo -e "${GREEN}✅ Uninstall aborted. Your environment is safe.${NC}"
+echo -e "\n${YELLOW}Please choose what to remove:${NC}"
+
+# SSH Configuration
+echo -e "\n${CYAN}📋 SSH Configuration:${NC}"
+REMOVE_SSH=false
+if ask_yes_no "Remove SSH keys and configuration? (~/.ssh/)"; then
+    REMOVE_SSH=true
+fi
+
+# Development Packages
+echo -e "\n${CYAN}📦 Development Packages:${NC}"
+REMOVE_DEV_PACKAGES=false
+if ask_yes_no "Remove development packages? (git, curl, wget, build-essential, etc.)"; then
+    REMOVE_DEV_PACKAGES=true
+fi
+
+# Node.js Environment
+echo -e "\n${CYAN}🟢 Node.js Environment:${NC}"
+REMOVE_NODE=false
+if ask_yes_no "Remove Node.js, NVM, and npm packages?"; then
+    REMOVE_NODE=true
+fi
+
+# Python Environment
+echo -e "\n${CYAN}🐍 Python Environment:${NC}"
+REMOVE_PYTHON_VENV=false
+if ask_yes_no "Remove Python virtual environments? (~/.venvs/)"; then
+    REMOVE_PYTHON_VENV=true
+fi
+
+REMOVE_PYTHON_PACKAGES=false
+if ask_yes_no "Remove Python development packages? (python3-pip, python3-venv, etc.)"; then
+    REMOVE_PYTHON_PACKAGES=true
+fi
+
+# Shell Configuration
+echo -e "\n${CYAN}🐚 Shell Configuration:${NC}"
+REMOVE_ZSH=false
+if ask_yes_no "Remove Zsh, Oh My Zsh, and shell configurations?"; then
+    REMOVE_ZSH=true
+fi
+
+RESET_SHELL=false
+if [ "$REMOVE_ZSH" = true ] && ask_yes_no "Reset default shell to bash?"; then
+    RESET_SHELL=true
+fi
+
+# Editor Configuration
+echo -e "\n${CYAN}📝 Editor Configuration:${NC}"
+REMOVE_NVIM_CONFIG=false
+if ask_yes_no "Remove Neovim configuration? (~/.config/nvim/)"; then
+    REMOVE_NVIM_CONFIG=true
+fi
+
+REMOVE_TMUX_CONFIG=false
+if ask_yes_no "Remove Tmux configuration? (~/.tmux/)"; then
+    REMOVE_TMUX_CONFIG=true
+fi
+
+# Additional Tools
+echo -e "\n${CYAN}🛠️  Additional Tools:${NC}"
+REMOVE_ADDITIONAL_TOOLS=false
+if ask_yes_no "Remove additional tools? (lazygit, starship, fzf, tldr, etc.)"; then
+    REMOVE_ADDITIONAL_TOOLS=true
+fi
+
+# Git Configuration
+echo -e "\n${CYAN}📚 Git Configuration:${NC}"
+REMOVE_GIT_CONFIG=false
+if ask_yes_no "Remove global Git configuration?"; then
+    REMOVE_GIT_CONFIG=true
+fi
+
+# Project Directory
+echo -e "\n${CYAN}📁 Project Directory:${NC}"
+REMOVE_PROJECTS=false
+if ask_yes_no "Remove ~/projects directory and contents? (⚠️  This will delete your projects!)"; then
+    REMOVE_PROJECTS=true
+fi
+
+# System cleanup
+echo -e "\n${CYAN}🧹 System Cleanup:${NC}"
+SYSTEM_CLEANUP=false
+if ask_yes_no "Run system cleanup? (autoremove, autoclean)"; then
+    SYSTEM_CLEANUP=true
+fi
+
+# Final confirmation
+echo -e "\n${RED}⚠️  FINAL CONFIRMATION${NC}"
+echo -e "${YELLOW}The following will be removed:${NC}"
+[ "$REMOVE_SSH" = true ] && echo -e "  ❌ SSH keys and configuration"
+[ "$REMOVE_DEV_PACKAGES" = true ] && echo -e "  ❌ Development packages"
+[ "$REMOVE_NODE" = true ] && echo -e "  ❌ Node.js environment"
+[ "$REMOVE_PYTHON_VENV" = true ] && echo -e "  ❌ Python virtual environments"
+[ "$REMOVE_PYTHON_PACKAGES" = true ] && echo -e "  ❌ Python development packages"
+[ "$REMOVE_ZSH" = true ] && echo -e "  ❌ Zsh and shell configurations"
+[ "$REMOVE_NVIM_CONFIG" = true ] && echo -e "  ❌ Neovim configuration"
+[ "$REMOVE_TMUX_CONFIG" = true ] && echo -e "  ❌ Tmux configuration"
+[ "$REMOVE_ADDITIONAL_TOOLS" = true ] && echo -e "  ❌ Additional development tools"
+[ "$REMOVE_GIT_CONFIG" = true ] && echo -e "  ❌ Git global configuration"
+[ "$REMOVE_PROJECTS" = true ] && echo -e "  ❌ Projects directory"
+[ "$RESET_SHELL" = true ] && echo -e "  ❌ Shell reset to bash"
+
+if ! ask_yes_no "Proceed with uninstallation?"; then
+    echo -e "${GREEN}✅ Uninstallation cancelled.${NC}"
     exit 0
 fi
 
@@ -90,274 +176,323 @@ echo -e "\n${YELLOW}🔑 Please enter your sudo password when prompted...${NC}"
 sudo -v
 
 # ==============================================
-# REMOVE DEVELOPMENT TOOLS
+# START UNINSTALLATION
 # ==============================================
 
-section "Removing Development Tools"
-
-# Remove NVM and Node.js
-if [ -d "$HOME/.nvm" ]; then
-    echo -e "${YELLOW}Removing NVM and Node.js...${NC}"
-    # Remove global npm packages first
-    if command_exists npm; then
-        echo -e "${YELLOW}Removing global npm packages...${NC}"
-        npm list -g --depth=0 --parseable --silent | grep -v '/npm$' | xargs -r npm uninstall -g 2>/dev/null || true
-    fi
-    safe_remove_dir "$HOME/.nvm"
-fi
-
-# Remove Python virtual environments
-echo -e "${YELLOW}Removing Python virtual environments...${NC}"
-safe_remove_dir "$HOME/.venvs"
-
-# Remove pipx installations
-if command_exists pipx; then
-    echo -e "${YELLOW}Removing pipx packages...${NC}"
-    pipx uninstall-all 2>/dev/null || true
-fi
+section "Starting Uninstallation"
 
 # ==============================================
-# REMOVE SHELL CONFIGURATION
+# SSH CONFIGURATION REMOVAL
 # ==============================================
 
-section "Removing Shell Configuration"
-
-# Remove Oh My Zsh
-if [ -d "$HOME/.oh-my-zsh" ]; then
-    echo -e "${YELLOW}Removing Oh My Zsh...${NC}"
-    safe_remove_dir "$HOME/.oh-my-zsh"
-fi
-
-# Remove Starship
-if command_exists starship; then
-    echo -e "${YELLOW}Removing Starship...${NC}"
-    sudo rm -f /usr/local/bin/starship
-fi
-
-# Remove Zsh configuration files
-echo -e "${YELLOW}Removing Zsh configuration...${NC}"
-safe_remove_file "$HOME/.zshrc"
-safe_remove_file "$HOME/.zsh_history"
-safe_remove_dir "$HOME/.cache/zsh"
-
-# Reset shell to bash
-if [ "$SHELL" = "$(which zsh)" ]; then
-    echo -e "${YELLOW}Resetting default shell to bash...${NC}"
-    chsh -s $(which bash)
-fi
-
-# Remove Starship config
-safe_remove_file "$HOME/.config/starship.toml"
-
-# ==============================================
-# REMOVE ADDITIONAL TOOLS
-# ==============================================
-
-section "Removing Additional Tools"
-
-# Remove fzf
-if [ -d "$HOME/.fzf" ]; then
-    echo -e "${YELLOW}Removing fzf...${NC}"
-    ~/.fzf/uninstall --no-update-rc 2>/dev/null || true
-    safe_remove_dir "$HOME/.fzf"
-fi
-
-# Remove lazygit
-if command_exists lazygit; then
-    echo -e "${YELLOW}Removing lazygit...${NC}"
-    sudo rm -f /usr/local/bin/lazygit
-fi
-
-# Remove GitHub CLI repository
-if command_exists gh; then
-    echo -e "${YELLOW}Removing GitHub CLI...${NC}"
-    remove_package gh
-    sudo rm -f /etc/apt/sources.list.d/github-cli.list
-    sudo rm -f /usr/share/keyrings/githubcli-archive-keyring.gpg
-fi
-
-# ==============================================
-# REMOVE GIT CONFIGURATION
-# ==============================================
-
-section "Removing Git Configuration"
-
-echo -e "${YELLOW}Removing Git global configuration...${NC}"
-git config --global --unset user.name 2>/dev/null || true
-git config --global --unset user.email 2>/dev/null || true
-git config --global --unset core.editor 2>/dev/null || true
-git config --global --unset init.defaultBranch 2>/dev/null || true
-git config --global --unset pull.rebase 2>/dev/null || true
-
-# Remove git aliases
-git config --global --unset alias.co 2>/dev/null || true
-git config --global --unset alias.br 2>/dev/null || true
-git config --global --unset alias.ci 2>/dev/null || true
-git config --global --unset alias.st 2>/dev/null || true
-git config --global --unset alias.unstage 2>/dev/null || true
-git config --global --unset alias.last 2>/dev/null || true
-git config --global --unset alias.lg 2>/dev/null || true
-
-# ==============================================
-# REMOVE SSH KEYS (WITH CONFIRMATION)
-# ==============================================
-
-section "SSH Keys"
-
-if [ -f "$HOME/.ssh/id_ed25519" ] || [ -f "$HOME/.ssh/id_ed25519.pub" ]; then
-    echo -e "${RED}⚠️  SSH keys found!${NC}"
-    echo -e "Files found:"
-    [ -f "$HOME/.ssh/id_ed25519" ] && echo -e "  • $HOME/.ssh/id_ed25519"
-    [ -f "$HOME/.ssh/id_ed25519.pub" ] && echo -e "  • $HOME/.ssh/id_ed25519.pub"
-    
-    echo -e "\n${YELLOW}SSH key removal options:${NC}"
-    echo -e "1. Keep SSH keys (recommended)"
-    echo -e "2. Remove SSH keys (you'll lose access to GitHub/servers)"
-    
-    read -p "Choose option (1 or 2): " ssh_choice
-    
-    if [[ "$ssh_choice" == "2" ]]; then
-        read -p $'\n'"${RED}Are you ABSOLUTELY sure? This will remove your SSH keys! Type 'DELETE' to confirm: ${NC}" ssh_confirm
-        if [[ "$ssh_confirm" == "DELETE" ]]; then
-            echo -e "${YELLOW}Removing SSH keys...${NC}"
-            safe_remove_file "$HOME/.ssh/id_ed25519"
-            safe_remove_file "$HOME/.ssh/id_ed25519.pub"
-            echo -e "${RED}⚠️  SSH keys removed! You'll need to generate new ones for GitHub access.${NC}"
-        else
-            echo -e "${GREEN}✅ SSH keys preserved.${NC}"
-        fi
+if [ "$REMOVE_SSH" = true ]; then
+    section "Removing SSH Configuration"
+    if [ -d ~/.ssh ]; then
+        echo -e "${YELLOW}Backing up SSH directory to ~/.ssh_backup...${NC}"
+        cp -r ~/.ssh ~/.ssh_backup
+        echo -e "${YELLOW}Removing SSH directory...${NC}"
+        rm -rf ~/.ssh
+        echo -e "${GREEN}✅ SSH configuration removed (backup saved to ~/.ssh_backup)${NC}"
     else
-        echo -e "${GREEN}✅ SSH keys preserved.${NC}"
-    fi
-else
-    echo -e "${YELLOW}No SSH keys found to remove.${NC}"
-fi
-
-# ==============================================
-# REMOVE DIRECTORIES AND FILES
-# ==============================================
-
-section "Removing Project Directories and Configuration"
-
-# Ask about project directories
-if [ -d "$HOME/projects" ]; then
-    echo -e "${RED}⚠️  Projects directory found: $HOME/projects${NC}"
-    read -p "Do you want to remove the projects directory? (y/N): " remove_projects
-    if [[ "$remove_projects" =~ ^[Yy]$ ]]; then
-        safe_remove_dir "$HOME/projects"
-        echo -e "${RED}⚠️  Projects directory removed!${NC}"
-    else
-        echo -e "${GREEN}✅ Projects directory preserved.${NC}"
+        echo -e "${YELLOW}SSH directory not found, skipping...${NC}"
     fi
 fi
 
-# Remove other directories created by setup
-echo -e "${YELLOW}Removing configuration directories...${NC}"
-safe_remove_dir "$HOME/tools"
-safe_remove_dir "$HOME/scripts"
-safe_remove_dir "$HOME/.cache/nvim"
-safe_remove_file "$HOME/.config/welcome.txt"
-
-# Clean up .local directories (but preserve the structure)
-echo -e "${YELLOW}Cleaning ~/.local directories...${NC}"
-rm -rf ~/.local/bin/* 2>/dev/null || true
-rm -rf ~/.local/share/* 2>/dev/null || true
-rm -rf ~/.local/lib/* 2>/dev/null || true
-
 # ==============================================
-# REMOVE PACKAGES
+# NODE.JS ENVIRONMENT REMOVAL
 # ==============================================
 
-section "Removing Optional Packages"
-
-echo -e "${YELLOW}The following packages can be removed if not needed for other purposes:${NC}"
-echo -e "• tldr, bat, ripgrep, fd-find, neovim"
-echo -e "• zsh (if you don't use it elsewhere)"
-echo -e "• Development libraries (build-essential, cmake, etc.)"
-
-read -p "Remove optional packages? (y/N): " remove_packages
-
-if [[ "$remove_packages" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Removing optional packages...${NC}"
+if [ "$REMOVE_NODE" = true ]; then
+    section "Removing Node.js Environment"
     
-    # Remove additional tools
+    # Remove NVM and Node.js
+    if [ -d ~/.nvm ]; then
+        echo -e "${YELLOW}Removing NVM and Node.js...${NC}"
+        rm -rf ~/.nvm
+        echo -e "${GREEN}✅ NVM removed${NC}"
+    fi
+    
+    # Remove global npm packages cache
+    if [ -d ~/.npm ]; then
+        echo -e "${YELLOW}Removing npm cache...${NC}"
+        rm -rf ~/.npm
+    fi
+    
+    # Remove yarn cache
+    if [ -d ~/.yarn ]; then
+        echo -e "${YELLOW}Removing yarn cache...${NC}"
+        rm -rf ~/.yarn
+    fi
+    
+    # Remove pnpm cache
+    if [ -d ~/.pnpm-store ]; then
+        echo -e "${YELLOW}Removing pnpm cache...${NC}"
+        rm -rf ~/.pnpm-store
+    fi
+    
+    echo -e "${GREEN}✅ Node.js environment removed${NC}"
+fi
+
+# ==============================================
+# PYTHON ENVIRONMENT REMOVAL
+# ==============================================
+
+if [ "$REMOVE_PYTHON_VENV" = true ]; then
+    section "Removing Python Virtual Environments"
+    if [ -d ~/.venvs ]; then
+        echo -e "${YELLOW}Removing Python virtual environments...${NC}"
+        rm -rf ~/.venvs
+        echo -e "${GREEN}✅ Python virtual environments removed${NC}"
+    fi
+fi
+
+if [ "$REMOVE_PYTHON_PACKAGES" = true ]; then
+    section "Removing Python Development Packages"
+    remove_package python3-pip
+    remove_package python3-venv
+    remove_package python3-full
+    # Remove pip cache
+    if [ -d ~/.cache/pip ]; then
+        rm -rf ~/.cache/pip
+    fi
+fi
+
+# ==============================================
+# SHELL CONFIGURATION REMOVAL
+# ==============================================
+
+if [ "$REMOVE_ZSH" = true ]; then
+    section "Removing Shell Configuration"
+    
+    # Remove Oh My Zsh
+    if [ -d ~/.oh-my-zsh ]; then
+        echo -e "${YELLOW}Removing Oh My Zsh...${NC}"
+        rm -rf ~/.oh-my-zsh
+    fi
+    
+    # Remove Zsh configuration files
+    [ -f ~/.zshrc ] && rm ~/.zshrc
+    [ -f ~/.zsh_history ] && rm ~/.zsh_history
+    [ -d ~/.cache/zsh ] && rm -rf ~/.cache/zsh
+    
+    # Remove Zsh package
+    remove_package zsh
+    
+    echo -e "${GREEN}✅ Zsh configuration removed${NC}"
+fi
+
+if [ "$RESET_SHELL" = true ]; then
+    section "Resetting Shell to Bash"
+    sudo chsh -s "$(which bash)" "$USER"
+    echo -e "${GREEN}✅ Default shell reset to bash${NC}"
+fi
+
+# ==============================================
+# EDITOR CONFIGURATION REMOVAL
+# ==============================================
+
+if [ "$REMOVE_NVIM_CONFIG" = true ]; then
+    section "Removing Neovim Configuration"
+    if [ -d ~/.config/nvim ]; then
+        echo -e "${YELLOW}Backing up Neovim config to ~/.config/nvim_backup...${NC}"
+        cp -r ~/.config/nvim ~/.config/nvim_backup
+        echo -e "${YELLOW}Removing Neovim configuration...${NC}"
+        rm -rf ~/.config/nvim
+        echo -e "${GREEN}✅ Neovim configuration removed (backup saved)${NC}"
+    fi
+    
+    # Remove Neovim cache
+    [ -d ~/.cache/nvim ] && rm -rf ~/.cache/nvim
+    [ -d ~/.local/share/nvim ] && rm -rf ~/.local/share/nvim
+    [ -d ~/.local/state/nvim ] && rm -rf ~/.local/state/nvim
+fi
+
+if [ "$REMOVE_TMUX_CONFIG" = true ]; then
+    section "Removing Tmux Configuration"
+    if [ -d ~/.tmux ]; then
+        echo -e "${YELLOW}Backing up Tmux config to ~/.tmux_backup...${NC}"
+        cp -r ~/.tmux ~/.tmux_backup
+        echo -e "${YELLOW}Removing Tmux configuration...${NC}"
+        rm -rf ~/.tmux
+        [ -f ~/.tmux.conf ] && rm ~/.tmux.conf
+        echo -e "${GREEN}✅ Tmux configuration removed (backup saved)${NC}"
+    fi
+fi
+
+# ==============================================
+# ADDITIONAL TOOLS REMOVAL
+# ==============================================
+
+if [ "$REMOVE_ADDITIONAL_TOOLS" = true ]; then
+    section "Removing Additional Tools"
+    
+    # Remove Starship
+    if command -v starship >/dev/null 2>&1; then
+        echo -e "${YELLOW}Removing Starship...${NC}"
+        sudo rm -f /usr/local/bin/starship
+        [ -f ~/.config/starship.toml ] && rm ~/.config/starship.toml
+    fi
+    
+    # Remove lazygit
+    if command -v lazygit >/dev/null 2>&1; then
+        echo -e "${YELLOW}Removing lazygit...${NC}"
+        sudo rm -f /usr/local/bin/lazygit
+    fi
+    
+    # Remove fzf
+    if [ -d ~/.fzf ]; then
+        echo -e "${YELLOW}Removing fzf...${NC}"
+        ~/.fzf/uninstall --all >/dev/null 2>&1 || true
+        rm -rf ~/.fzf
+    fi
+    
+    # Remove tldr
     remove_package tldr
-    remove_package bat
+    
+    # Remove GitHub CLI
+    remove_package gh
+    
+    echo -e "${GREEN}✅ Additional tools removed${NC}"
+fi
+
+# ==============================================
+# DEVELOPMENT PACKAGES REMOVAL
+# ==============================================
+
+if [ "$REMOVE_DEV_PACKAGES" = true ]; then
+    section "Removing Development Packages"
+    
+    # Core development packages
+    remove_package build-essential
+    remove_package cmake
+    remove_package pkg-config
+    remove_package libssl-dev
+    remove_package libffi-dev
+    remove_package zlib1g-dev
+    remove_package liblzma-dev
+    remove_package libreadline-dev
+    remove_package libbz2-dev
+    remove_package libsqlite3-dev
+    remove_package libncurses-dev
+    remove_package xz-utils
+    remove_package tk-dev
+    remove_package libxml2-dev
+    remove_package libxmlsec1-dev
+    remove_package llvm
+    
+    # Tools
+    remove_package curl
+    remove_package wget
+    remove_package jq
+    remove_package htop
+    remove_package unzip
+    remove_package zip
+    remove_package tar
+    remove_package gzip
+    remove_package bzip2
     remove_package ripgrep
     remove_package fd-find
     remove_package neovim
-    remove_package zsh
+    remove_package tmux
+    remove_package luarocks
+    remove_package openssh-client
+    remove_package xclip
+    remove_package xsel
+    remove_package wl-clipboard
+    remove_package eza
+    remove_package bat
     
-    # Remove development packages (be careful with these)
-    read -p "Remove development packages (build-essential, cmake, etc.)? This might affect other tools (y/N): " remove_dev
-    if [[ "$remove_dev" =~ ^[Yy]$ ]]; then
-        remove_package cmake
-        remove_package pkg-config
-        remove_package libssl-dev
-        remove_package libffi-dev
-        remove_package zlib1g-dev
-        remove_package liblzma-dev
-        remove_package libreadline-dev
-        remove_package libbz2-dev
-        remove_package libsqlite3-dev
-        remove_package libncurses-dev
-        remove_package tk-dev
-        remove_package libxml2-dev
-        remove_package libxmlsec1-dev
-        remove_package llvm
-        
-        echo -e "${YELLOW}Note: build-essential left intact for system stability${NC}"
-    fi
+    # Remove PPAs
+    sudo add-apt-repository --remove -y ppa:neovim-ppa/unstable 2>/dev/null || true
     
-    # Clean up
-    echo -e "${YELLOW}Cleaning up package cache...${NC}"
-    sudo apt autoremove -y
-    sudo apt autoclean
+    echo -e "${GREEN}✅ Development packages removed${NC}"
 fi
 
 # ==============================================
-# FINAL CLEANUP
+# GIT CONFIGURATION REMOVAL
 # ==============================================
 
-section "Final Cleanup"
+if [ "$REMOVE_GIT_CONFIG" = true ]; then
+    section "Removing Git Configuration"
+    if [ -f ~/.gitconfig ]; then
+        echo -e "${YELLOW}Backing up Git config to ~/.gitconfig_backup...${NC}"
+        cp ~/.gitconfig ~/.gitconfig_backup
+        echo -e "${YELLOW}Removing Git global configuration...${NC}"
+        rm ~/.gitconfig
+        echo -e "${GREEN}✅ Git configuration removed (backup saved)${NC}"
+    fi
+fi
 
-# Remove any remaining cache files
-echo -e "${YELLOW}Cleaning remaining cache files...${NC}"
-rm -rf ~/.cache/pip 2>/dev/null || true
-rm -rf ~/.npm 2>/dev/null || true
-rm -rf ~/.node-gyp 2>/dev/null || true
-rm -rf ~/.yarn 2>/dev/null || true
+# ==============================================
+# PROJECT DIRECTORY REMOVAL
+# ==============================================
 
-# Reset environment variables in current session
-unset NVM_DIR
-unset BAT_THEME
+if [ "$REMOVE_PROJECTS" = true ]; then
+    section "Removing Projects Directory"
+    if [ -d ~/projects ]; then
+        echo -e "${RED}⚠️  This will permanently delete all your projects!${NC}"
+        if ask_yes_no "Are you absolutely sure you want to delete ~/projects?"; then
+            echo -e "${YELLOW}Removing projects directory...${NC}"
+            rm -rf ~/projects
+            echo -e "${GREEN}✅ Projects directory removed${NC}"
+        else
+            echo -e "${YELLOW}Skipping projects directory removal${NC}"
+        fi
+    fi
+fi
 
-echo -e "${YELLOW}Resetting terminal...${NC}"
+# ==============================================
+# CLEANUP REMAINING DIRECTORIES
+# ==============================================
+
+section "Cleaning Up Remaining Directories"
+
+# Remove created directories if empty
+echo -e "${YELLOW}Cleaning up empty directories...${NC}"
+rmdir ~/tools 2>/dev/null || true
+rmdir ~/scripts 2>/dev/null || true
+rmdir ~/.cache 2>/dev/null || true
+rmdir ~/.local/bin 2>/dev/null || true
+rmdir ~/.local/share 2>/dev/null || true
+rmdir ~/.local/lib 2>/dev/null || true
+rmdir ~/.local 2>/dev/null || true
+
+# Remove welcome message
+[ -f ~/welcome.txt ] && rm ~/welcome.txt
+
+# ==============================================
+# SYSTEM CLEANUP
+# ==============================================
+
+if [ "$SYSTEM_CLEANUP" = true ]; then
+    section "System Cleanup"
+    echo -e "${YELLOW}Running system cleanup...${NC}"
+    sudo apt autoremove -y
+    sudo apt autoclean
+    sudo apt update
+    echo -e "${GREEN}✅ System cleanup completed${NC}"
+fi
 
 # ==============================================
 # COMPLETION
 # ==============================================
 
-section "Uninstall Complete"
+section "Uninstallation Complete"
 
-echo -e "${GREEN}✅ Development environment has been uninstalled!${NC}"
-echo -e "\n${YELLOW}Summary of actions taken:${NC}"
-echo -e "• Removed Node.js, NVM, and npm packages"
-echo -e "• Removed Python virtual environments"
-echo -e "• Removed Zsh, Oh My Zsh, and Starship configuration"
-echo -e "• Removed additional development tools"
-echo -e "• Cleaned Git global configuration"
-echo -e "• Removed project directories (if requested)"
-echo -e "• Removed SSH keys (if requested)"
+echo -e "${GREEN}✅ Development environment uninstallation completed!${NC}"
+echo -e "\n${YELLOW}Summary:${NC}"
+[ "$REMOVE_SSH" = true ] && echo -e "  ✅ SSH configuration removed (backup: ~/.ssh_backup)"
+[ "$REMOVE_DEV_PACKAGES" = true ] && echo -e "  ✅ Development packages removed"
+[ "$REMOVE_NODE" = true ] && echo -e "  ✅ Node.js environment removed"
+[ "$REMOVE_PYTHON_VENV" = true ] && echo -e "  ✅ Python virtual environments removed"
+[ "$REMOVE_PYTHON_PACKAGES" = true ] && echo -e "  ✅ Python development packages removed"
+[ "$REMOVE_ZSH" = true ] && echo -e "  ✅ Zsh and shell configurations removed"
+[ "$REMOVE_NVIM_CONFIG" = true ] && echo -e "  ✅ Neovim configuration removed (backup: ~/.config/nvim_backup)"
+[ "$REMOVE_TMUX_CONFIG" = true ] && echo -e "  ✅ Tmux configuration removed (backup: ~/.tmux_backup)"
+[ "$REMOVE_ADDITIONAL_TOOLS" = true ] && echo -e "  ✅ Additional tools removed"
+[ "$REMOVE_GIT_CONFIG" = true ] && echo -e "  ✅ Git configuration removed (backup: ~/.gitconfig_backup)"
+[ "$REMOVE_PROJECTS" = true ] && echo -e "  ✅ Projects directory removed"
+[ "$RESET_SHELL" = true ] && echo -e "  ✅ Shell reset to bash"
 
-echo -e "\n${BLUE}What's left:${NC}"
-echo -e "• Basic system packages (git, curl, wget, etc.)"
-echo -e "• Your personal files outside development directories"
-echo -e "• System-wide configurations"
-
-echo -e "\n${YELLOW}Next steps:${NC}"
-echo -e "1. Restart your terminal: ${GREEN}exec bash${NC}"
-echo -e "2. Your shell has been reset to bash"
-echo -e "3. Run 'sudo apt autoremove' if you want to clean up dependencies"
-
-echo -e "\n${BLUE}Environment successfully reset! 🎯${NC}"
+echo -e "\n${BLUE}Note: You may need to restart your terminal for all changes to take effect.${NC}"
+echo -e "${GREEN}Environment successfully cleaned! 🧹${NC}"
