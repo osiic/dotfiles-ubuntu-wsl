@@ -269,3 +269,155 @@ echo -e "Email   : ${GREEN}$USER_EMAIL${NC}"
 echo -e "GitHub  : ${GREEN}$GITHUB_USER${NC}"
 
 read -p "Press Enter to continue with installation..."
+
+# Run installation script
+if ! "$TEMP_INSTALL_SCRIPT"; then
+    echo -e "${RED}❌ Installation failed!${NC}"
+    echo -e "You can try to restore from backup at: $BACKUP_DIR"
+    echo -e "Or run the original install script manually: $INSTALL_SCRIPT"
+    exit 1
+fi
+
+# Clean up temporary script
+rm -f "$TEMP_INSTALL_SCRIPT"
+
+echo -e "${GREEN}✅ Installation completed successfully${NC}"
+
+# ==============================================
+# POST-INSTALLATION VERIFICATION
+# ==============================================
+
+section "Post-Installation Verification"
+
+echo -e "${YELLOW}Verifying installation...${NC}"
+
+# Check if key tools are installed
+VERIFICATION_PASSED=true
+
+check_command() {
+    if command -v "$1" >/dev/null 2>&1; then
+        echo -e "  ✅ $1: ${GREEN}$(command -v "$1")${NC}"
+    else
+        echo -e "  ❌ $1: ${RED}Not found${NC}"
+        VERIFICATION_PASSED=false
+    fi
+}
+
+echo -e "${CYAN}Checking installed tools:${NC}"
+check_command git
+check_command nvim
+check_command tmux
+check_command node
+check_command npm
+check_command python3
+check_command zsh
+check_command starship
+
+# Check configurations
+echo -e "\n${CYAN}Checking configurations:${NC}"
+[ -f ~/.zshrc ] && echo -e "  ✅ Zsh config: ${GREEN}~/.zshrc${NC}" || echo -e "  ❌ Zsh config: ${RED}Missing${NC}"
+[ -d ~/.config/nvim ] && echo -e "  ✅ Neovim config: ${GREEN}~/.config/nvim${NC}" || echo -e "  ❌ Neovim config: ${RED}Missing${NC}"
+[ -f ~/.gitconfig ] && echo -e "  ✅ Git config: ${GREEN}~/.gitconfig${NC}" || echo -e "  ❌ Git config: ${RED}Missing${NC}"
+
+if [ "$VERIFICATION_PASSED" = true ]; then
+    echo -e "\n${GREEN}✅ All verifications passed!${NC}"
+else
+    echo -e "\n${YELLOW}⚠️  Some verifications failed. You may need to check the installation.${NC}"
+fi
+
+# ==============================================
+# CLEANUP AND FINAL STEPS
+# ==============================================
+
+section "Final Cleanup"
+
+echo -e "${YELLOW}Performing final cleanup...${NC}"
+
+# Clean up any temporary files
+sudo apt autoremove -y >/dev/null 2>&1 || true
+sudo apt autoclean >/dev/null 2>&1 || true
+
+# Create reinstall summary
+SUMMARY_FILE="$HOME/reinstall_summary.txt"
+cat > "$SUMMARY_FILE" << EOF
+╔════════════════════════════════════════════╗
+║  🔄 Development Environment Reinstallation  ║
+╚════════════════════════════════════════════╝
+
+Reinstallation completed: $(date)
+
+User Information:
+• Name: $USER_NAME
+• Email: $USER_EMAIL  
+• GitHub: $GITHUB_USER
+
+Backup Location: $BACKUP_DIR
+Contains: SSH keys, Git config, Neovim config, Tmux config, Shell configs
+
+Fresh Installation Includes:
+• Git with your configuration
+• Node.js (Latest LTS) with npm, yarn, pnpm, bun
+• Python with virtual environment support
+• Zsh with Oh My Zsh and plugins
+• Neovim with custom configuration
+• Tmux with custom configuration
+• Starship prompt
+• Development tools: lazygit, fzf, ripgrep, eza, bat
+• GitHub CLI
+
+Quick Start Commands:
+• Open projects: proj (cd ~/projects)
+• Edit with Neovim: v filename  
+• Git status: g st
+• Git log: glg
+• Reload shell: sz
+
+Next Steps:
+1. Restart terminal: exec zsh
+2. Authenticate GitHub CLI: gh auth login
+3. Add SSH key to GitHub if needed
+4. Start developing!
+
+Note: If you need to restore any old configuration, 
+check the backup directory above.
+EOF
+
+# ==============================================
+# SUCCESS MESSAGE
+# ==============================================
+
+section "Reinstallation Complete"
+
+echo -e "${GREEN}🎉 Development environment reinstallation successful!${NC}"
+echo -e "\n${YELLOW}Summary:${NC}"
+echo -e "• ✅ Previous environment completely removed"
+echo -e "• ✅ Fresh installation completed with latest configurations"
+echo -e "• ✅ User settings preserved and applied"
+echo -e "• ✅ Backup created at: ${CYAN}$BACKUP_DIR${NC}"
+echo -e "• ✅ Summary saved at: ${CYAN}$SUMMARY_FILE${NC}"
+
+echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}🚀 NEXT STEPS:${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "1. ${YELLOW}Restart your terminal:${NC} ${GREEN}exec zsh${NC}"
+echo -e "2. ${YELLOW}View summary:${NC} ${GREEN}cat ~/reinstall_summary.txt${NC}"
+echo -e "3. ${YELLOW}Authenticate GitHub:${NC} ${GREEN}gh auth login${NC}"
+echo -e "4. ${YELLOW}Start developing:${NC} ${GREEN}proj${NC} (opens ~/projects)"
+
+echo -e "\n${CYAN}If you encounter any issues:${NC}"
+echo -e "• Check the backup at: $BACKUP_DIR"  
+echo -e "• Run individual scripts manually if needed"
+echo -e "• Restore specific configs from backup"
+
+echo -e "\n${MAGENTA}🎊 Happy coding with your fresh environment! 🎊${NC}"
+
+# ==============================================
+# OPTIONAL IMMEDIATE SHELL RESTART
+# ==============================================
+
+if ask_yes_no "Would you like to restart your shell now to apply all changes?"; then
+    echo -e "${GREEN}Restarting shell...${NC}"
+    exec zsh
+else
+    echo -e "${YELLOW}Remember to restart your terminal or run 'exec zsh' to apply all changes.${NC}"
+fi
