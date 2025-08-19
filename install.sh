@@ -269,6 +269,8 @@ export TERM="xterm-256color"
 export BAT_THEME="Dracula"
 
 # ===== Aliases =====
+alias dev="cd ~/projects/ && nvim ."
+alias proj="cd ~/projects"
 alias ls="exa --group-directories-first"
 alias ll="exa -alF --group-directories-first --git"
 alias lt="exa -T --group-directories-first --git-ignore"
@@ -282,7 +284,25 @@ alias dc="docker-compose"
 alias sz="source ~/.zshrc"
 
 # === GIT COMMANDS ===
-alias gs='echo -e "\n\033[1;34m== Branches ==\033[0m" && git branch --sort=-committerdate --color=always && echo -e "\n\033[1;34m== Status ==\033[0m" && git status -sb --ahead-behind'
+alias gs='
+echo -e "\n\033[1;34m== Branches ==\033[0m" &&
+git --no-pager branch --sort=-committerdate --color=always &&
+
+echo -e "\n\033[1;34m== Last Commits ==\033[0m" &&
+git --no-pager log --oneline -n 5 --decorate --color=always &&
+
+echo -e "\n\033[1;34m== Stash List ==\033[0m" &&
+git --no-pager stash list &&
+
+echo -e "\n\033[1;34m== Remote Info ==\033[0m" &&
+git remote -v &&
+
+echo -e "\n\033[1;34m== Status ==\033[0m" &&
+git status -sb --ahead-behind &&
+
+echo -e "\n\033[1;34m== Diff (unstaged) ==\033[0m" &&
+git --no-pager diff --stat
+'
 alias gb='git branch'
 alias gbd='git branch -D'
 alias gc='git checkout'
