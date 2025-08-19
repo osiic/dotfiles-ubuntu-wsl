@@ -221,14 +221,30 @@ echo -e "${MAGENTA}Recommended: Keep projects directory, remove everything else 
 
 read -p "Press Enter to continue with uninstallation..."
 
-# Run uninstall script
-if ! "$UNINSTALL_SCRIPT"; then
-    echo -e "${RED}❌ Uninstallation failed!${NC}"
-    echo -e "Backup is available at: $BACKUP_DIR"
-    exit 1
+# Run uninstall script with error handling
+set +e  # Don't exit on error for uninstall
+if "$UNINSTALL_SCRIPT"; then
+    echo -e "${GREEN}✅ Uninstallation completed successfully${NC}"
+    UNINSTALL_SUCCESS=true
+else
+    echo -e "${YELLOW}⚠️  Uninstallation completed with some issues${NC}"
+    echo -e "${CYAN}This is often normal due to package dependencies.${NC}"
+    echo -e "${CYAN}Continuing with fresh installation...${NC}"
+    UNINSTALL_SUCCESS=false
 fi
+set -e  # Resume exit on error
 
-echo -e "${GREEN}✅ Uninstallation completed successfully${NC}"
+# System recovery if uninstall had issues
+if [ "$UNINSTALL_SUCCESS" = false ]; then
+    section "System Recovery"
+    echo -e "${YELLOW}Attempting to fix any package issues...${NC}"
+    
+    sudo apt --fix-broken install -y || true
+    sudo apt update || true
+    sudo apt-get clean || true
+    
+    echo -e "${GREEN}✅ System recovery completed${NC}"
+fi
 
 # ==============================================
 # PRE-INSTALLATION SETUP
@@ -271,17 +287,44 @@ echo -e "GitHub  : ${GREEN}$GITHUB_USER${NC}"
 read -p "Press Enter to continue with installation..."
 
 # Run installation script
+set +e  # Don't exit on error initially
 if ! "$TEMP_INSTALL_SCRIPT"; then
     echo -e "${RED}❌ Installation failed!${NC}"
-    echo -e "You can try to restore from backup at: $BACKUP_DIR"
-    echo -e "Or run the original install script manually: $INSTALL_SCRIPT"
-    exit 1
+    echo -e "Attempting recovery..."
+    
+    # Try to fix common issues
+    echo -e "${YELLOW}Fixing package dependencies...${NC}"
+    sudo apt --fix-broken install -y
+    sudo apt update
+    
+    # Retry installation
+    echo -e "${YELLOW}Retrying installation...${NC}"
+    if "$TEMP_INSTALL_SCRIPT"; then
+        echo -e "${GREEN}✅ Installation successful on retry${NC}"
+        INSTALL_SUCCESS=true
+    else
+        echo -e "${RED}❌ Installation failed on retry${NC}"
+        echo -e "You can try to restore from backup at: $BACKUP_DIR"
+        echo -e "Or run the original install script manually: $INSTALL_SCRIPT"
+        INSTALL_SUCCESS=false
+    fi
+else
+    echo -e "${GREEN}✅ Installation completed successfully${NC}"
+    INSTALL_SUCCESS=true
 fi
+set -e  # Resume exit on error
 
 # Clean up temporary script
 rm -f "$TEMP_INSTALL_SCRIPT"
 
-echo -e "${GREEN}✅ Installation completed successfully${NC}"
+if [ "$INSTALL_SUCCESS" = false ]; then
+    echo -e "${RED}❌ Reinstallation failed. Check the logs above for details.${NC}"
+    echo -e "\n${YELLOW}Recovery options:${NC}"
+    echo -e "1. ${GREEN}Run system recovery:${NC} ./fix-system.sh"
+    echo -e "2. ${GREEN}Try manual install:${NC} $INSTALL_SCRIPT"  
+    echo -e "3. ${GREEN}Restore from backup:${NC} $BACKUP_DIR"
+    exit 1
+fi
 
 # ==============================================
 # POST-INSTALLATION VERIFICATION
