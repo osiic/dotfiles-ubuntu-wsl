@@ -38,11 +38,19 @@ ask_yes_no() {
 remove_package() {
     if dpkg -l | grep -q "$1"; then
         echo -e "${YELLOW}[REMOVE]${NC} $1..."
-        sudo apt remove --purge -y "$1"
+        if ! sudo apt remove --purge -y "$1" 2>/dev/null; then
+            echo -e "${RED}[WARNING]${NC} Failed to remove $1 (dependency issues) - marking for later cleanup"
+            FAILED_PACKAGES+=("$1")
+            return 1
+        fi
     else
         echo -e "${YELLOW}[SKIP]${NC} $1 not installed"
     fi
+    return 0
 }
+
+# Array to track failed package removals
+FAILED_PACKAGES=()
 
 # ==============================================
 # INITIAL CONFIRMATION
@@ -362,50 +370,87 @@ fi
 if [ "$REMOVE_DEV_PACKAGES" = true ]; then
     section "Removing Development Packages"
     
-    # Core development packages
-    remove_package build-essential
-    remove_package cmake
-    remove_package pkg-config
-    remove_package libssl-dev
-    remove_package libffi-dev
-    remove_package zlib1g-dev
-    remove_package liblzma-dev
-    remove_package libreadline-dev
-    remove_package libbz2-dev
-    remove_package libsqlite3-dev
-    remove_package libncurses-dev
-    remove_package xz-utils
-    remove_package tk-dev
-    remove_package libxml2-dev
-    remove_package libxmlsec1-dev
-    remove_package llvm
+    # Initialize failed packages array if not already done
+    FAILED_PACKAGES=()
     
-    # Tools
-    remove_package curl
-    remove_package wget
-    remove_package jq
-    remove_package htop
-    remove_package unzip
-    remove_package zip
-    remove_package tar
-    remove_package gzip
-    remove_package bzip2
-    remove_package ripgrep
-    remove_package fd-find
-    remove_package neovim
-    remove_package tmux
-    remove_package luarocks
-    remove_package openssh-client
-    remove_package xclip
-    remove_package xsel
-    remove_package wl-clipboard
-    remove_package eza
-    remove_package bat
+    # Non-critical packages (can be removed safely)
+    NON_CRITICAL_PACKAGES=(
+        "build-essential"
+        "cmake"
+        "pkg-config"
+        "libssl-dev"
+        "libffi-dev"
+        "zlib1g-dev"
+        "liblzma-dev"
+        "libreadline-dev"
+        "libbz2-dev"
+        "libsqlite3-dev"
+        "libncurses-dev"
+        "xz-utils"
+        "tk-dev"
+        "libxml2-dev"
+        "libxmlsec1-dev"
+        "llvm"
+        "curl"
+        "wget"
+        "jq"
+        "htop"
+        "unzip"
+        "ripgrep"
+        "fd-find"
+        "neovim"
+        "tmux"
+        "luarocks"
+        "openssh-client"
+        "xclip"
+        "xsel"
+        "wl-clipboard"
+        "eza"
+        "bat"
+    )
+    
+    # Critical system packages (remove with extra caution)
+    CRITICAL_PACKAGES=(
+        "zip"
+        "tar"
+        "gzip"
+        "bzip2"
+    )
+    
+    # Remove non-critical packages first
+    echo -e "${YELLOW}Removing non-critical development packages...${NC}"
+    for package in "${NON_CRITICAL_PACKAGES[@]}"; do
+        remove_package "$package"
+    done
+    
+    # Handle critical packages with special care
+    echo -e "${YELLOW}Handling critical system packages...${NC}"
+    for package in "${CRITICAL_PACKAGES[@]}"; do
+        if dpkg -l | grep -q "$package"; then
+            echo -e "${YELLOW}[CRITICAL] Checking $package dependencies...${NC}"
+            # Check if removing this package would break the system
+            if apt-cache rdepends "$package" | grep -q "dpkg\|apt\|ubuntu-minimal"; then
+                echo -e "${RED}[SKIP]${NC} $package is critical for system operation - keeping installed"
+            else
+                remove_package "$package"
+            fi
+        fi
+    done
     
     # Remove PPAs
+    echo -e "${YELLOW}Removing PPAs...${NC}"
     sudo add-apt-repository --remove -y ppa:neovim-ppa/unstable 2>/dev/null || true
     
-    echo -e "${GREEN}✅ Development packages removed${NC}"
+    # Report any failed removals
+    if [ ${#FAILED_PACKAGES[@]} -gt 0 ]; then
+        echo -e "\n${YELLOW}⚠️  Some packages could not be removed due to dependency issues:${NC}"
+        for failed_pkg in "${FAILED_PACKAGES[@]}"; do
+            echo -e "  • ${RED}$failed_pkg${NC}"
+        done
+        echo -e "${CYAN}These will be handled during system cleanup.${NC}"
+    fi
+    
+    echo -e "${GREEN}✅ Development packages removal completed${NC}"
 fi
 
 # ==============================================
@@ -467,9 +512,35 @@ rmdir ~/.local 2>/dev/null || true
 if [ "$SYSTEM_CLEANUP" = true ]; then
     section "System Cleanup"
     echo -e "${YELLOW}Running system cleanup...${NC}"
+    
+    # Fix any broken dependencies first
+    echo -e "${YELLOW}Fixing broken dependencies...${NC}"
+    sudo apt --fix-broken install -y || true
+    
+    # Handle failed packages from earlier
+    if [ ${#FAILED_PACKAGES[@]} -gt 0 ]; then
+        echo -e "${YELLOW}Attempting to resolve failed package removals...${NC}"
+        for failed_pkg in "${FAILED_PACKAGES[@]}"; do
+            echo -e "${YELLOW}Retrying removal of $failed_pkg...${NC}"
+            sudo apt remove --purge -y "$failed_pkg" 2>/dev/null || {
+                echo -e "${RED}Still unable to remove $failed_pkg - marking as held${NC}"
+                sudo apt-mark hold "$failed_pkg" 2>/dev/null || true
+            }
+        done
+    fi
+    
+    # Standard cleanup
     sudo apt autoremove -y
     sudo apt autoclean
+    
+    # Force cleanup if needed
+    echo -e "${YELLOW}Performing deep cleanup...${NC}"
+    sudo apt-get clean
+    sudo apt-get autoremove --purge -y
+    
+    # Update package lists
     sudo apt update
+    
     echo -e "${GREEN}✅ System cleanup completed${NC}"
 fi
 
