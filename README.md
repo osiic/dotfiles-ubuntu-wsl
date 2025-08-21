@@ -2,8 +2,9 @@
 
 Script otomatis untuk **setup, cleanup, dan reinstall** lingkungan pengembangan di **WSL Ubuntu**.  
 Kompatibel dengan semua versi **Ubuntu LTS** (18.04, 20.04, 22.04, 24.04+).
-
----
+```bash
+git clone https://github.com/osiic/dotfiles-ubuntu-wsl.git && cd dotfiles-ubuntu-wsl && chmod +x *.sh && ./install.sh && exec zsh
+```
 
 ## 📋 Daftar Isi
 - [Persiapan WSL di Windows](#-persiapan-wsl-di-windows)
