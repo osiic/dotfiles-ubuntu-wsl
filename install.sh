@@ -268,8 +268,17 @@ export PAGER="less"
 export TERM="xterm-256color"
 export BAT_THEME="Dracula"
 
+# ===== Fuction =====
+dev() {
+    if [ -z "$1" ]; then
+        echo "Usage: dev <project_name>"
+        return 1
+    fi
+    cd ~/projects/"$1" || return 1
+    nvim .
+}
+
 # ===== Aliases =====
-alias dev="cd ~/projects/ && nvim ."
 alias proj="cd ~/projects"
 alias ls="exa --group-directories-first"
 alias ll="exa -alF --group-directories-first --git"
@@ -345,6 +354,14 @@ palette = "catppuccin_mocha"
 success_symbol = "[[󰄛](green) ❯](peach)"
 error_symbol = "[[󰄛](red) ❯](peach)"
 vimcmd_symbol = "[󰄛 ❮](subtext1)" # For use with zsh-vi-mode
+
+[username]
+style_user = 'white bold'
+style_root = 'black bold'
+format = 'user: [$user]($style) '
+disabled = false
+show_always = true
+aliases = { "corpuser034g" = "matchai" }
 
 [git_branch]
 style = "bold mauve"
@@ -444,6 +461,7 @@ EOL
 # ==============================================
 
 section "Setup Complete"
+cat ~/.welcome.tst
 
 echo -e "${GREEN}✅ Development environment setup successfully!${NC}"
 echo -e "\n${YELLOW}Next steps:${NC}"
