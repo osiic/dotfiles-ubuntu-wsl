@@ -50,42 +50,64 @@ echo -e "${BLUE}╚════════════════════�
 echo -e "\n${YELLOW}🔑 Please enter your sudo password when prompted...${NC}"
 sudo -v
 
-# Get user info
-section "User Configuration"
-read -p "Enter your full name: " USER_NAME
-read -p "Enter your email address: " USER_EMAIL
-read -p "Enter your GitHub username: " GITHUB_USER
-
-# Verify information
-echo -e "\n${YELLOW}Please verify your information:${NC}"
-echo -e "Name    : ${GREEN}$USER_NAME${NC}"
-echo -e "Email   : ${GREEN}$USER_EMAIL${NC}"
-echo -e "GitHub  : ${GREEN}$GITHUB_USER${NC}"
-read -p "Is this correct? (y/n): " confirm
-if [[ "$confirm" != "y" ]]; then
-    echo -e "${RED}❌ Setup aborted. Please run the script again.${NC}"
-    exit 1
-fi
-
 # ==============================================
-# SSH CONFIGURATION
+# SSH / GitHub Login Configuration
 # ==============================================
 
-section "SSH Setup"
+section "GitHub Setup"
 
-if [ ! -f ~/.ssh/id_ed25519 ]; then
-    echo -e "${YELLOW}Generating SSH key...${NC}"
-    ssh-keygen -t ed25519 -C "$USER_EMAIL" -f ~/.ssh/id_ed25519 -N ""
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_ed25519
-    
-    echo -e "\n${GREEN}🔑 Public SSH Key:${NC}"
-    cat ~/.ssh/id_ed25519.pub
-    echo -e "\n${YELLOW}Please add this key to your GitHub account:${NC}"
-    echo -e "https://github.com/settings/keys\n"
-    read -p "Press Enter to continue after adding the key..."
+echo -e "${YELLOW}Choose GitHub authentication method:${NC}"
+echo "1) SSH Key (recommended)"
+echo "2) GitHub CLI login (HTTPS)"
+read -p "Enter choice [1/2]: " auth_method
+
+if [[ "$auth_method" == "1" ]]; then
+    # ================= SSH Setup =================
+    if [ -f ~/.ssh/id_ed25519 ]; then
+        echo -e "${GREEN}✅ SSH key already exists, skipping SSH setup.${NC}"
+    else
+        section "User Configuration"
+        read -p "Enter your full name: " USER_NAME
+        read -p "Enter your email address: " USER_EMAIL
+        read -p "Enter your GitHub username: " GITHUB_USER
+        
+        echo -e "\n${YELLOW}Please verify your information:${NC}"
+        echo -e "Name    : ${GREEN}$USER_NAME${NC}"
+        echo -e "Email   : ${GREEN}$USER_EMAIL${NC}"
+        echo -e "GitHub  : ${GREEN}$GITHUB_USER${NC}"
+        read -p "Is this correct? (y/n): " confirm
+        if [[ "$confirm" != "y" ]]; then
+            echo -e "${RED}❌ Setup aborted. Please run the script again.${NC}"
+            exit 1
+        fi
+
+        echo -e "${YELLOW}Generating SSH key...${NC}"
+        ssh-keygen -t ed25519 -C "$USER_EMAIL" -f ~/.ssh/id_ed25519 -N ""
+        eval "$(ssh-agent -s)"
+        ssh-add ~/.ssh/id_ed25519
+        
+        echo -e "\n${GREEN}🔑 Public SSH Key:${NC}"
+        cat ~/.ssh/id_ed25519.pub
+        echo -e "\n${YELLOW}Please add this key to your GitHub account:${NC}"
+        echo "https://github.com/settings/keys"
+        read -p "Press Enter to continue after adding the key..."
+    fi
+
+elif [[ "$auth_method" == "2" ]]; then
+    # ================= GitHub CLI Login =================
+    if ! command_exists gh; then
+        echo -e "${YELLOW}Installing GitHub CLI...${NC}"
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install -y gh
+    fi
+
+    echo -e "${YELLOW}Logging in with GitHub CLI...${NC}"
+    gh auth login
 else
-    echo -e "${YELLOW}SSH key already exists${NC}"
+    echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
+    exit 1
 fi
 
 # ==============================================
@@ -108,15 +130,21 @@ sudo apt autoremove -y
 
 # Install essential packages
 section "Installing Base Packages"
-sudo apt install -y --no-install-recommends \
-    software-properties-common apt-transport-https ca-certificates \
-    build-essential cmake pkg-config libssl-dev libffi-dev \
-    zlib1g-dev liblzma-dev libreadline-dev libbz2-dev \
-    libsqlite3-dev libncurses-dev eza bat \
-    xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm \
-    git curl wget jq htop unzip zip tar gzip bzip2 \
-    ripgrep fd-find neovim tmux luarocks python3-pip \
+packages=(
+    software-properties-common apt-transport-https ca-certificates 
+    build-essential cmake pkg-config libssl-dev libffi-dev 
+    zlib1g-dev liblzma-dev libreadline-dev libbz2-dev 
+    libsqlite3-dev libncurses-dev 
+    xz-utils tk-dev libxml2-dev libxmlsec1-dev llvm 
+    git curl wget jq htop unzip zip tar gzip bzip2 
+    ripgrep fd-find neovim tmux luarocks python3-pip 
     openssh-client xclip xsel wl-clipboard
+)
+
+for pkg in "${packages[@]}"; do
+    sudo apt install -y --no-install-recommends "$pkg" || echo "Package $pkg tidak ditemukan, dilewati."
+done
+
 
 # ==============================================
 # DEVELOPMENT TOOLS
@@ -138,15 +166,6 @@ git config --global alias.st status
 git config --global alias.unstage 'reset HEAD --'
 git config --global alias.last 'log -1 HEAD'
 git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
-
-# Install GitHub CLI
-if ! command_exists gh; then
-    echo -e "${YELLOW}Installing GitHub CLI...${NC}"
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-    sudo apt update
-    sudo apt install -y gh
-fi
 
 # Node.js via NVM
 section "Node.js Environment"
@@ -280,10 +299,32 @@ dev() {
 
 # ===== Aliases =====
 alias proj="cd ~/projects"
-alias ls="exa --group-directories-first"
-alias ll="exa -alF --group-directories-first --git"
-alias lt="exa -T --group-directories-first --git-ignore"
-alias cat="batcat --paging=never"
+# ===============================
+# LS Aliases Optimal
+# ===============================
+
+# 1. List all files (termasuk hidden) dengan detail
+alias la="ls -lah --color=auto"
+
+# 2. Long list biasa (lebih readable, ukuran file manusiawi)
+alias ll="ls -lh --color=auto"
+
+# 3. List project/Git friendly:
+# - Direktori selalu di atas
+# - Sembunyikan file yang di-ignore Git
+# - Detail + human readable size
+# - Urut berdasarkan waktu modifikasi terbaru
+alias lt="ls -lhT --group-directories-first --git-ignore --color=auto -t"
+
+# 4. Quick list tanpa detail, hanya nama file
+alias l="ls --color=auto"
+
+# 5. List file tersembunyi saja
+alias lh="ls -ld .* --color=auto"
+
+# 6. List files terbaru dahulu
+alias newest="ls -lt --color=auto"
+
 alias grep="rg"
 alias find="fd"
 alias v="nvim"
