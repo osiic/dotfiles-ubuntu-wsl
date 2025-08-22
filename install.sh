@@ -293,7 +293,7 @@ if [ -f ~/.zshrc ]; then
 fi
 
 # Create new .zshrc
-cat > ~/.zshrc << 'EOL'
+cat > ~/.zshrc << "EOL"
 # ===== Oh My Zsh Configuration =====
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
