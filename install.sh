@@ -256,14 +256,6 @@ if ! command_exists starship; then
     curl -sS https://starship.rs/install.sh | sh -s -- -y
 fi
 
-#!/bin/bash
-
-# Colors for output
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
 echo -e "${YELLOW}Setting up Zsh plugins...${NC}"
 
 # Set ZSH custom plugins directory
@@ -341,6 +333,7 @@ dev() {
 
 # ===== Aliases =====
 alias p="cd ~/projects"
+
 # ===============================
 # LS Aliases Optimal
 # ===============================
