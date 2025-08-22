@@ -400,7 +400,7 @@ vimcmd_symbol = "[󰄛 ❮](subtext1)" # For use with zsh-vi-mode
 [username]
 style_user = 'white bold'
 style_root = 'black bold'
-format = 'user: [$user]($style) '
+format = '[$user]($style) '
 disabled = false
 show_always = true
 aliases = { "corpuser034g" = "matchai" }
