@@ -560,11 +560,10 @@ EOL
 # ==============================================
 
 section "Setup Complete"
-cat ~/.welcome.tst
+cat ~/.welcome.txt
 
 echo -e "${GREEN}✅ Development environment setup successfully!${NC}"
 echo -e "\n${YELLOW}Next steps:${NC}"
 echo -e "1. Restart your shell: ${GREEN}exec zsh${NC}"
-echo -e "2. View welcome message: ${GREEN}cat ~/welcome.txt${NC}"
-echo -e "3. Start developing in ~/projects directory"
+echo -e "2. Start developing in ~/projects directory just type dev in your shell"
 echo -e "\n${BLUE}Happy coding! 🎉${NC}"
