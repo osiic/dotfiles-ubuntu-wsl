@@ -15,6 +15,11 @@ CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 NC='\033[0m'
 
+# Create backup directory with timestamp
+BACKUP_DIR="$HOME/.backup_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$BACKUP_DIR"
+echo -e "${YELLOW}Backup directory created: $BACKUP_DIR${NC}"
+
 # Function to print section headers
 section() {
     echo -e "\n${BLUE}==================================${NC}"
@@ -251,15 +256,51 @@ if ! command_exists starship; then
     curl -sS https://starship.rs/install.sh | sh -s -- -y
 fi
 
-# Zsh plugins
+#!/bin/bash
+
+# Colors for output
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 echo -e "${YELLOW}Setting up Zsh plugins...${NC}"
+
+# Set ZSH custom plugins directory
 ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
-git clone https://github.com/agkozak/zsh-z ${ZSH_CUSTOM}/plugins/zsh-z
+
+# Function to clone or update a plugin
+install_plugin() {
+    local plugin_name=$1
+    local plugin_url=$2
+    local plugin_dir="${ZSH_CUSTOM}/plugins/${plugin_name}"
+    
+    if [ -d "$plugin_dir" ]; then
+        echo -e "${YELLOW}Backing up existing $plugin_name...${NC}"
+        mv "$plugin_dir" "$BACKUP_DIR/${plugin_name}"
+        echo -e "${GREEN}Cloning fresh $plugin_name...${NC}"
+        git clone "$plugin_url" "$plugin_dir"
+    else
+        echo -e "${GREEN}Installing $plugin_name...${NC}"
+        git clone "$plugin_url" "$plugin_dir"
+    fi
+}
+
+# Install plugins
+install_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions"
+install_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting"
+install_plugin "zsh-z" "https://github.com/agkozak/zsh-z"
 
 # Zsh configuration
 echo -e "${YELLOW}Configuring Zsh...${NC}"
+
+# Backup existing .zshrc if it exists
+if [ -f ~/.zshrc ]; then
+    echo -e "${YELLOW}Backing up existing .zshrc...${NC}"
+    cp ~/.zshrc "$BACKUP_DIR/.zshrc"
+fi
+
+# Create new .zshrc
 cat > ~/.zshrc << 'EOL'
 # ===== Oh My Zsh Configuration =====
 export ZSH="$HOME/.oh-my-zsh"
@@ -287,7 +328,7 @@ export PAGER="less"
 export TERM="xterm-256color"
 export BAT_THEME="Dracula"
 
-# ===== Fuction =====
+# ===== Function =====
 dev() {
     if [ -z "$1" ]; then
         echo "Usage: dev <project_name>"
@@ -381,7 +422,21 @@ export NVM_DIR="$HOME/.nvm"
 eval "$(starship init zsh)"
 EOL
 
+echo -e "${GREEN}New .zshrc created${NC}"
+
 # Starship configuration
+echo -e "${YELLOW}Configuring Starship...${NC}"
+
+# Create starship config directory if it doesn't exist
+mkdir -p ~/.config
+
+# Backup existing starship.toml if it exists
+if [ -f ~/.config/starship.toml ]; then
+    echo -e "${YELLOW}Backing up existing starship.toml...${NC}"
+    cp ~/.config/starship.toml "$BACKUP_DIR/starship.toml"
+fi
+
+# Create new starship.toml
 cat > ~/.config/starship.toml << 'EOL'
 # Get editor completions based on the config schema
 "$schema" = 'https://starship.rs/config-schema.json'
@@ -440,6 +495,8 @@ base = "#1e1e2e"
 mantle = "#181825"
 crust = "#11111b"
 EOL
+
+echo -e "${GREEN}Starship configuration created${NC}"
 
 # ==============================================
 # DEVELOPMENT TOOLS
