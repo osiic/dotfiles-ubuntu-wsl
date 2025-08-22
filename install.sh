@@ -331,25 +331,65 @@ dev() {
     tmux .
 }
 
-gss() {
-    echo -e "\n\033[1;34m== Branches ==\033[0m"
-    git --no-pager branch --sort=-committerdate --color=always
-    
-    echo -e "\n\033[1;34m== Last Commits ==\033[0m"
-    git --no-pager log --oneline -n 5 --decorate --color=always
-    
-    echo -e "\n\033[1;34m== Stash List ==\033[0m"
-    git --no-pager stash list
-    
-    echo -e "\n\033[1;34m== Remote Info ==\033[0m"
-    git remote -v
-    
-    echo -e "\n\033[1;34m== Status ==\033[0m"
-    git status -sb --ahead-behind
-    
-    echo -e "\n\033[1;34m== Diff (unstaged) ==\033[0m"
-    git --no-pager diff --stat
+show_welcome() {
+    # Get version information with fallbacks
+    git_version=$(git --version 2>/dev/null | cut -d' ' -f3 || echo "Not installed")
+    node_version=$(node --version 2>/dev/null || echo "Not installed")
+    npm_version=$(npm --version 2>/dev/null || echo "Not installed")
+    python_version=$(python3 --version 2>/dev/null | cut -d' ' -f2 || echo "Not installed")
+    nvim_version=$(nvim --version 2>/dev/null | head -n1 | cut -d' ' -f2 || echo "Not installed")
+    shell_type=$(echo $SHELL | rev | cut -d/ -f1 | rev)
+    wsl_distro=$(grep -oP '(?<=NAME=").*(?=")' /etc/os-release 2>/dev/null || echo "Unknown")
+
+    # Display welcome message
+    cat << EOL
+╔═══════════════════════════════════════════════════════════╗
+║                🎉 WSL Development Environment Ready!      ║
+╚═══════════════════════════════════════════════════════════╝
+
+Your environment has been configured with:
+
+┌───────────────────────────────────────────────────────────┐
+│  • Git:        $git_version
+│  • Node.js:    $node_version
+│  • npm:        $npm_version
+│  • Python:     $python_version
+│  • Neovim:     $nvim_version
+│  • Shell:      $shell_type
+│  • WSL Distro: $wsl_distro
+└───────────────────────────────────────────────────────────┘
+
+📦 Project Management:
+  - p:      Navigate to ~/projects directory
+
+🛠️  Development Tools:
+  - v/nvim: Open Neovim editor
+  - dev <filename project>: Start development project
+
+📝 Git Shortcuts:
+  - gs:     Git status
+  - gac:    Git add all changes and Git commit with message
+  - gp:     Git push to current branch
+
+📚 Help & Information:
+  - welcome: Display this welcome message
+  - tldr:    Simplified command help
+  - cheatsheet: Show common commands for installed tools
+
+💡 Pro Tip: Customize your environment by editing ~/.bashrc or ~/.zshrc
+
+Run 'welcome' to see this message again at any time.
+EOL
 }
+
+# Alias to the function
+alias welcome=show_welcome
+
+# Display welcome message on first login
+if [ -z "\$WELCOME_SHOWN" ]; then
+    show_welcome
+    export WELCOME_SHOWN=true
+fi
 
 # ===== Aliases =====
 alias p="cd ~/projects"
@@ -379,15 +419,27 @@ alias lh="ls -ld .* --color=auto"
 
 # 6. List files terbaru dahulu
 alias newest="ls -lt --color=auto"
-alias gs='git status -sb'
 alias grep="rg"
 alias find="fd"
 alias v="nvim"
 alias g="git"
 alias sz="source ~/.zshrc"
-alias welcome='cat ~/welcome.txt'
 
 # === GIT COMMANDS ===
+alias gs='git status -sb --ahead-behind'
+alias gss='\
+    echo -e "\n\033[1;34m== Branches ==\033[0m" && \
+    git --no-pager branch --sort=-committerdate --color=always && \
+    echo -e "\n\033[1;34m== Last Commits ==\033[0m" && \
+    git --no-pager log --oneline -n 5 --decorate --color=always && \
+    echo -e "\n\033[1;34m== Stash List ==\033[0m" && \
+    git --no-pager stash list && \
+    echo -e "\n\033[1;34m== Remote Info ==\033[0m" && \
+    git remote -v && \
+    echo -e "\n\033[1;34m== Status ==\033[0m" && \
+    git status -sb --ahead-behind && \
+    echo -e "\n\033[1;34m== Diff (unstaged) ==\033[0m" && \
+    git --no-pager diff --stat'
 alias gb='git branch'
 alias gbd='git branch -D'
 alias gc='git checkout'
@@ -399,7 +451,6 @@ alias gcm='git commit -m'
 alias gp='git push'
 alias gpl='git pull'
 alias gf='git fetch'
-alias gss='git status -s'
 alias glg='git log --color --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
 alias gcp='git cherry-pick'
 alias gsu='git submodule update --init --recursive'
@@ -522,64 +573,10 @@ if ! command_exists tldr; then
 fi
 
 # ==============================================
-# FINAL SETUP
-# ==============================================
-
-# Get version information with fallbacks
-git_version=$(git --version 2>/dev/null | cut -d' ' -f3 || echo "Not installed")
-node_version=$(node --version 2>/dev/null || echo "Not installed")
-npm_version=$(npm --version 2>/dev/null || echo "Not installed")
-python_version=$(python3 --version 2>/dev/null | cut -d' ' -f2 || echo "Not installed")
-nvim_version=$(nvim --version 2>/dev/null | head -n1 | cut -d' ' -f2 || echo "Not installed")
-shell_type=$(echo $SHELL | rev | cut -d/ -f1 | rev)
-wsl_distro=$(grep -oP '(?<=NAME=").*(?=")' /etc/os-release 2>/dev/null || echo "Unknown")
-
-# Create welcome message
-cat > ~/welcome.txt << 'EOL'
-╔═══════════════════════════════════════════════════════════╗
-║                🎉 WSL Development Environment Ready!      ║
-╚═══════════════════════════════════════════════════════════╝
-
-Your environment has been configured with:
-
-┌───────────────────────────────────────────────────────────┐
-│  • Git:        $git_version
-│  • Node.js:    $node_version
-│  • npm:        $npm_version
-│  • Python:     $python_version
-│  • Neovim:     $nvim_version
-│  • Shell:      $shell_type
-│  • WSL Distro: $wsl_distro
-└───────────────────────────────────────────────────────────┘
-
-📦 Project Management:
-  - p:      Navigate to ~/projects directory
-
-🛠️  Development Tools:
-  - v/nvim: Open Neovim editor
-  - dev <filename project>: Start development project
-
-📝 Git Shortcuts:
-  - gs:     Git status
-  - gac:    Git add all changes and Git commit with message
-  - gp:     Git push to current branch
-
-📚 Help & Information:
-  - welcome: Display this welcome message
-  - tldr:    Simplified command help
-  - cheatsheet: Show common commands for installed tools
-
-💡 Pro Tip: Customize your environment by editing ~/.bashrc or ~/.zshrc
-
-Run 'welcome' to see this message again at any time.
-EOL
-
-# ==============================================
 # COMPLETION
 # ==============================================
 
 section "Setup Complete"
-cat ~/welcome.txt
 
 echo -e "${GREEN}✅ Development environment setup successfully!${NC}"
 echo -e "\n${YELLOW}Next steps:${NC}"
