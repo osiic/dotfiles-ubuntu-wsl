@@ -340,7 +340,7 @@ dev() {
 }
 
 # ===== Aliases =====
-alias proj="cd ~/projects"
+alias p="cd ~/projects"
 # ===============================
 # LS Aliases Optimal
 # ===============================
@@ -371,9 +371,8 @@ alias grep="rg"
 alias find="fd"
 alias v="nvim"
 alias g="git"
-alias d="docker"
-alias dc="docker-compose"
 alias sz="source ~/.zshrc"
+alias welcome='cat ~/welcome.txt
 
 # === GIT COMMANDS ===
 alias gs='
@@ -533,26 +532,43 @@ fi
 # ==============================================
 
 # Create welcome message
-cat > ~/welcome.txt << EOL
-╔════════════════════════════════════════════╗
-║   🎉 WSL Development Environment Ready!    ║
-╚════════════════════════════════════════════╝
+cat > ~/welcome.txt << 'EOL'
+╔═══════════════════════════════════════════════════════════╗
+║                🎉 WSL Development Environment Ready!      ║
+╚═══════════════════════════════════════════════════════════╝
 
 Your environment has been configured with:
 
-• Git: $(git --version | cut -d' ' -f3)
-• Node.js: $(node --version)
-• npm: $(npm --version)
-• Python: $(python3 --version | cut -d' ' -f2)
-• Neovim: $(nvim --version | head -n1 | cut -d' ' -f2)
+┌───────────────────────────────────────────────────────────┐
+│  • Git:        $(git --version 2>/dev/null | cut -d' ' -f3 || echo "Not installed") 
+│  • Node.js:    $(node --version 2>/dev/null || echo "Not installed")
+│  • npm:        $(npm --version 2>/dev/null || echo "Not installed")
+│  • Python:     $(python3 --version 2>/dev/null | cut -d' ' -f2 || echo "Not installed")
+│  • Neovim:     $(nvim --version 2>/dev/null | head -n1 | cut -d' ' -f2 || echo "Not installed")
+│  • Shell:      $(echo $SHELL | rev | cut -d/ -f1 | rev)
+│  • WSL Distro: $(grep -oP '(?<=NAME=").*(?=")' /etc/os-release 2>/dev/null || echo "Unknown")
+└───────────────────────────────────────────────────────────┘
 
-Quick Start:
-- Projects: ~/projects
-- Edit files: v filename
-- Git status: g st
-- Docker containers: d ps
+📦 Project Management:
+  - p:      Navigate to ~/projects directory
 
-Run 'tldr <command>' for simplified help
+🛠️  Development Tools:
+  - v/nvim: Open Neovim editor
+  - dev <filename project>: Start development project
+
+📝 Git Shortcuts:
+  - gs:     Git status
+  - gac:    Git add all changes and Git commit with message
+  - gp:     Git push to current branch
+
+📚 Help & Information:
+  - welcome: Display this welcome message
+  - tldr:    Simplified command help
+  - cheatsheet: Show common commands for installed tools
+
+💡 Pro Tip: Customize your environment by editing ~/.bashrc or ~/.zshrc
+
+Run 'welcome' to see this message again at any time.
 EOL
 
 # ==============================================
@@ -560,7 +576,7 @@ EOL
 # ==============================================
 
 section "Setup Complete"
-cat ~/.welcome.txt
+cat ~/welcome.txt
 
 echo -e "${GREEN}✅ Development environment setup successfully!${NC}"
 echo -e "\n${YELLOW}Next steps:${NC}"
