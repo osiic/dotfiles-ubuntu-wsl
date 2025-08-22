@@ -342,7 +342,7 @@ show_welcome() {
     wsl_distro=$(grep -oP '(?<=NAME=").*(?=")' /etc/os-release 2>/dev/null || echo "Unknown")
 
     # Display welcome message
-    cat << EOL
+    cat << EOF
 ╔═══════════════════════════════════════════════════════════╗
 ║                🎉 WSL Development Environment Ready!      ║
 ╚═══════════════════════════════════════════════════════════╝
@@ -379,7 +379,7 @@ Your environment has been configured with:
 💡 Pro Tip: Customize your environment by editing ~/.bashrc or ~/.zshrc
 
 Run 'welcome' to see this message again at any time.
-EOL
+EOF
 }
 
 # Alias to the function
