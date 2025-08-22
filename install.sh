@@ -291,10 +291,11 @@ export BAT_THEME="Dracula"
 dev() {
     if [ -z "$1" ]; then
         echo "Usage: dev <project_name>"
+        ls -al ~/projects/
         return 1
     fi
     cd ~/projects/"$1" || return 1
-    nvim .
+    tmux .
 }
 
 # ===== Aliases =====
