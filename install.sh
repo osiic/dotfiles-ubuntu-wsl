@@ -524,6 +524,15 @@ fi
 # FINAL SETUP
 # ==============================================
 
+# Get version information with fallbacks
+git_version=$(git --version 2>/dev/null | cut -d' ' -f3 || echo "Not installed")
+node_version=$(node --version 2>/dev/null || echo "Not installed")
+npm_version=$(npm --version 2>/dev/null || echo "Not installed")
+python_version=$(python3 --version 2>/dev/null | cut -d' ' -f2 || echo "Not installed")
+nvim_version=$(nvim --version 2>/dev/null | head -n1 | cut -d' ' -f2 || echo "Not installed")
+shell_type=$(echo $SHELL | rev | cut -d/ -f1 | rev)
+wsl_distro=$(grep -oP '(?<=NAME=").*(?=")' /etc/os-release 2>/dev/null || echo "Unknown")
+
 # Create welcome message
 cat > ~/welcome.txt << 'EOL'
 ╔═══════════════════════════════════════════════════════════╗
@@ -533,13 +542,13 @@ cat > ~/welcome.txt << 'EOL'
 Your environment has been configured with:
 
 ┌───────────────────────────────────────────────────────────┐
-│  • Git:        $(git --version 2>/dev/null | cut -d' ' -f3 || echo "Not installed") 
-│  • Node.js:    $(node --version 2>/dev/null || echo "Not installed")
-│  • npm:        $(npm --version 2>/dev/null || echo "Not installed")
-│  • Python:     $(python3 --version 2>/dev/null | cut -d' ' -f2 || echo "Not installed")
-│  • Neovim:     $(nvim --version 2>/dev/null | head -n1 | cut -d' ' -f2 || echo "Not installed")
-│  • Shell:      $(echo $SHELL | rev | cut -d/ -f1 | rev)
-│  • WSL Distro: $(grep -oP '(?<=NAME=").*(?=")' /etc/os-release 2>/dev/null || echo "Unknown")
+│  • Git:        $git_version
+│  • Node.js:    $node_version
+│  • npm:        $npm_version
+│  • Python:     $python_version
+│  • Neovim:     $nvim_version
+│  • Shell:      $shell_type
+│  • WSL Distro: $wsl_distro
 └───────────────────────────────────────────────────────────┘
 
 📦 Project Management:
