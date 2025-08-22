@@ -331,6 +331,26 @@ dev() {
     tmux .
 }
 
+gss() {
+    echo -e "\n\033[1;34m== Branches ==\033[0m"
+    git --no-pager branch --sort=-committerdate --color=always
+    
+    echo -e "\n\033[1;34m== Last Commits ==\033[0m"
+    git --no-pager log --oneline -n 5 --decorate --color=always
+    
+    echo -e "\n\033[1;34m== Stash List ==\033[0m"
+    git --no-pager stash list
+    
+    echo -e "\n\033[1;34m== Remote Info ==\033[0m"
+    git remote -v
+    
+    echo -e "\n\033[1;34m== Status ==\033[0m"
+    git status -sb --ahead-behind
+    
+    echo -e "\n\033[1;34m== Diff (unstaged) ==\033[0m"
+    git --no-pager diff --stat
+}
+
 # ===== Aliases =====
 alias p="cd ~/projects"
 
@@ -359,34 +379,15 @@ alias lh="ls -ld .* --color=auto"
 
 # 6. List files terbaru dahulu
 alias newest="ls -lt --color=auto"
-
+alias gs='git status -sb'
 alias grep="rg"
 alias find="fd"
 alias v="nvim"
 alias g="git"
 alias sz="source ~/.zshrc"
-alias welcome='cat ~/welcome.txt
+alias welcome='cat ~/welcome.txt'
 
 # === GIT COMMANDS ===
-alias gs='
-echo -e "\n\033[1;34m== Branches ==\033[0m" &&
-git --no-pager branch --sort=-committerdate --color=always &&
-
-echo -e "\n\033[1;34m== Last Commits ==\033[0m" &&
-git --no-pager log --oneline -n 5 --decorate --color=always &&
-
-echo -e "\n\033[1;34m== Stash List ==\033[0m" &&
-git --no-pager stash list &&
-
-echo -e "\n\033[1;34m== Remote Info ==\033[0m" &&
-git remote -v &&
-
-echo -e "\n\033[1;34m== Status ==\033[0m" &&
-git status -sb --ahead-behind &&
-
-echo -e "\n\033[1;34m== Diff (unstaged) ==\033[0m" &&
-git --no-pager diff --stat
-'
 alias gb='git branch'
 alias gbd='git branch -D'
 alias gc='git checkout'
