@@ -331,6 +331,11 @@ dev() {
     tmux .
 }
 
+_dev_complete() {
+  compadd $(ls -1 ~/projects)
+}
+compdef _dev_complete dev
+
 show_welcome() {
     # Get version information with fallbacks
     git_version=$(git --version 2>/dev/null | cut -d' ' -f3 || echo "Not installed")
