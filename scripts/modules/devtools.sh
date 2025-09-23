@@ -2,6 +2,9 @@
 
 # Development Tools Setup Module
 
+# Source core functions
+source "scripts/core/functions.sh"
+
 setup_devtools() {
     section "Development Tools Setup"
 
@@ -45,15 +48,27 @@ setup_devtools() {
 
     # Pastikan python3 ada
     if ! command -v python3 &>/dev/null; then
-        sudo apt update
-        sudo apt install -y python3 python3-pip python3-venv python3-full
+        if can_run_sudo; then
+            sudo apt update
+            sudo apt install -y python3 python3-pip python3-venv python3-full
+        else
+            echo -e "${RED}[ERROR]${NC} Cannot install Python: sudo requires password"
+            echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+            exit 1
+        fi
     fi
 
     # Deteksi versi Python (misalnya 3.12)
     PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
 
     # Install paket venv untuk versi Python yang sesuai
-    sudo apt install -y "python${PY_VER}-venv"
+    if can_run_sudo; then
+        sudo apt install -y "python${PY_VER}-venv"
+    else
+        echo -e "${RED}[ERROR]${NC} Cannot install Python venv: sudo requires password"
+        echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+        exit 1
+    fi
 
     # Buat virtual environment default
     rm -rf ~/.venvs/default

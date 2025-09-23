@@ -3,7 +3,7 @@
 # Shell Environment Setup Module
 
 # Source core functions
-source "../core/functions.sh"
+source "scripts/core/functions.sh"
 
 setup_shell() {
     section "Shell Configuration"
@@ -11,13 +11,25 @@ setup_shell() {
     # Install Zsh and Oh My Zsh
     if ! command_exists zsh; then
         echo -e "${YELLOW}Installing Zsh...${NC}"
-        sudo apt install -y zsh
+        if can_run_sudo; then
+            sudo apt install -y zsh
+        else
+            echo -e "${RED}[ERROR]${NC} Cannot install Zsh: sudo requires password"
+            echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+            exit 1
+        fi
     fi
 
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
         echo -e "${YELLOW}Installing Oh My Zsh...${NC}"
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-        sudo chsh -s "$(which zsh)" "$USER"
+        if can_run_sudo; then
+            sudo chsh -s "$(which zsh)" "$USER"
+        else
+            echo -e "${RED}[ERROR]${NC} Cannot change default shell: sudo requires password"
+            echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+            exit 1
+        fi
     fi
 
     # Neovim config

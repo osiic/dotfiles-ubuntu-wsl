@@ -24,10 +24,6 @@ echo -e "${BLUE}║${CYAN}   🚀 WSL Ubuntu Development Setup Script   ${BLUE}�
 echo -e "${BLUE}║${MAGENTA}       For All Ubuntu LTS Versions        ${BLUE}║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
 
-# Ask for sudo password once
-echo -e "\n${YELLOW}🔑 Please enter your sudo password when prompted...${NC}"
-sudo -v
-
 # Environment validation
 check_wsl
 check_ubuntu_version

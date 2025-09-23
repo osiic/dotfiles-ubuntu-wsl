@@ -18,11 +18,26 @@ section() {
     echo -e "${BLUE}==================================${NC}"
 }
 
+# Function to check if we can run sudo without password
+can_run_sudo() {
+    if sudo -n true 2>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Function to install package if not exists
 install_package() {
     if ! dpkg -l | grep -q "$1"; then
         echo -e "${YELLOW}[INSTALL]${NC} $1..."
-        sudo apt install -y "$1"
+        if can_run_sudo; then
+            sudo apt install -y "$1"
+        else
+            echo -e "${RED}[ERROR]${NC} Cannot install $1: sudo requires password"
+            echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+            exit 1
+        fi
     else
         echo -e "${YELLOW}[SKIP]${NC} $1 already installed"
     fi

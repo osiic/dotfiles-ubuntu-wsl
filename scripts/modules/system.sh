@@ -2,6 +2,9 @@
 
 # System Setup Module
 
+# Source core functions
+source "scripts/core/functions.sh"
+
 setup_system() {
     section "System Configuration"
 
@@ -13,9 +16,15 @@ setup_system() {
 
     # Update system
     section "Updating System"
-    sudo add-apt-repository -y ppa:neovim-ppa/unstable
-    sudo apt update && sudo apt upgrade -y
-    sudo apt autoremove -y
+    if can_run_sudo; then
+        sudo add-apt-repository -y ppa:neovim-ppa/unstable
+        sudo apt update && sudo apt upgrade -y
+        sudo apt autoremove -y
+    else
+        echo -e "${RED}[ERROR]${NC} Cannot update system: sudo requires password"
+        echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+        exit 1
+    fi
 
     # Install essential packages
     section "Installing Base Packages"
@@ -31,6 +40,6 @@ setup_system() {
     )
 
     for pkg in "${packages[@]}"; do
-        sudo apt install -y --no-install-recommends "$pkg" || echo "Package $pkg tidak ditemukan, dilewati."
+        install_package "$pkg"
     done
 }

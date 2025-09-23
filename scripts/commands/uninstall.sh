@@ -3,7 +3,7 @@
 # Uninstall script functionality
 
 # Source core functions
-source "../core/functions.sh"
+source "scripts/core/functions.sh"
 
 echo -e "${RED}⚠️  WARNING: This will remove all installed components!${NC}"
 read -p "Are you sure you want to uninstall? (type 'yes' to confirm): " confirm
@@ -37,7 +37,13 @@ rm -f ~/.ssh/id_ed25519
 rm -f ~/.ssh/id_ed25519.pub
 
 echo -e "${YELLOW}Restoring shell to bash...${NC}"
-sudo chsh -s "$(which bash)" "$USER"
+if can_run_sudo; then
+    sudo chsh -s "$(which bash)" "$USER"
+else
+    echo -e "${RED}[ERROR]${NC} Cannot change default shell: sudo requires password"
+    echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}✅ Uninstall complete!${NC}"
 echo -e "${YELLOW}Note: System packages (git, curl, etc.) were not removed${NC}"

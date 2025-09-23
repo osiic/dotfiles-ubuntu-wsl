@@ -2,6 +2,9 @@
 
 # Extra Tools Setup Module
 
+# Source core functions
+source "scripts/core/functions.sh"
+
 setup_extras() {
     section "Additional Development Tools"
 
@@ -18,14 +21,26 @@ setup_extras() {
         LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
         curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
         tar xf lazygit.tar.gz lazygit
-        sudo install lazygit /usr/local/bin
+        if can_run_sudo; then
+            sudo install lazygit /usr/local/bin
+        else
+            echo -e "${RED}[ERROR]${NC} Cannot install lazygit: sudo requires password"
+            echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+            exit 1
+        fi
         rm lazygit.tar.gz lazygit
     fi
 
     # Install tldr
     if ! command_exists tldr; then
         echo -e "${YELLOW}Installing tldr...${NC}"
-        sudo apt install -y tldr
-        tldr --update
+        if can_run_sudo; then
+            sudo apt install -y tldr
+            tldr --update
+        else
+            echo -e "${RED}[ERROR]${NC} Cannot install tldr: sudo requires password"
+            echo -e "${YELLOW}Please run this script in an interactive terminal where you can enter your password${NC}"
+            exit 1
+        fi
     fi
 }

@@ -8,6 +8,8 @@
 
 Repository ini berisi konfigurasi dan skrip otomatisasi untuk mengatur lingkungan pengembangan di Ubuntu pada Windows Subsystem for Linux (WSL). Dengan satu perintah, Anda bisa mendapatkan lingkungan pengembangan yang siap pakai dengan semua tools yang dibutuhkan.
 
+**Kompatibel dengan semua versi Ubuntu LTS: 18.04, 20.04, 22.04, dan 24.04**
+
 ## 🎯 Kenapa Harus Pakai Ini?
 
 Mengatur lingkungan pengembangan di WSL bisa menjadi proses yang memakan waktu dan rawan kesalahan. Repository ini menyelesaikan masalah tersebut dengan:
@@ -18,6 +20,7 @@ Mengatur lingkungan pengembangan di WSL bisa menjadi proses yang memakan waktu d
 - **Komprehensif**: Menyertakan semua tools yang dibutuhkan developer
 - **Mudah Dipelihara**: Update otomatis dan sistem uninstall
 - **Modular**: Komponen dapat dikustomisasi sesuai kebutuhan
+- **Kompatibel**: Bekerja di semua versi Ubuntu LTS WSL (18, 20, 22, 24)
 
 ### Tools & Teknologi yang Diinstal:
 - **Shell**: Zsh dengan Oh My Zsh + Plugin (autosuggestions, syntax highlighting)
@@ -225,6 +228,33 @@ Untuk menghapus semua komponen yang diinstal:
 ```
 
 Catatan: Paket sistem dasar (git, curl, dll) tidak akan dihapus untuk menghindari mengganggu setup lain.
+
+## 🧪 Kompatibilitas
+
+Repository ini telah diuji dan kompatibel dengan semua versi Ubuntu LTS WSL:
+- Ubuntu 18.04 LTS (WSL 1 & 2)
+- Ubuntu 20.04 LTS (WSL 1 & 2)
+- Ubuntu 22.04 LTS (WSL 1 & 2)
+- Ubuntu 24.04 LTS (WSL 1 & 2)
+
+## 🐛 Penanganan Masalah
+
+### Masalah Umum dan Solusi
+
+1. **Permission denied saat menjalankan script**:
+   ```bash
+   chmod +x setup.sh
+   chmod +x scripts/**/*.sh
+   ```
+
+2. **Sudo password required**:
+   Script ini dirancang untuk dijalankan di terminal interaktif di mana Anda dapat memasukkan password sudo saat diminta.
+
+3. **Git authentication failed**:
+   Pastikan Anda telah mengatur SSH key dengan benar atau login melalui GitHub CLI.
+
+4. **Package not found errors**:
+   Coba jalankan `sudo apt update` sebelum menjalankan script.
 
 ## 📝 Lisensi
 
