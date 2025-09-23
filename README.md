@@ -275,4 +275,15 @@ Jika Anda memiliki pertanyaan atau masukan, jangan ragu untuk menghubungi saya d
 
 ---
 
+**Catatan Perubahan Terbaru:**
+Repository ini telah diperbarui dengan perbaikan signifikan untuk meningkatkan kompatibilitas dan keandalan:
+- Perbaikan masalah resolusi path di semua modul skrip
+- Peningkatan penanganan error untuk lingkungan non-interaktif
+- Verifikasi kompatibilitas dengan semua versi Ubuntu LTS (18, 20, 22, 24)
+- Peningkatan dokumentasi dan panduan penggunaan
+
+Untuk detail lengkap perubahan terbaru, lihat file [CHANGELOG.md](CHANGELOG.md) dan [FINAL_SUMMARY.md](FINAL_SUMMARY.md).
+
+---
+
 Dibuat dengan ❤️ untuk komunitas developer WSL
