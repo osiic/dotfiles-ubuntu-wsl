@@ -3,7 +3,7 @@
 # Uninstall script functionality
 
 # Source core functions
-source "$(dirname "$0")/core/functions.sh"
+source "../core/functions.sh"
 
 echo -e "${RED}⚠️  WARNING: This will remove all installed components!${NC}"
 read -p "Are you sure you want to uninstall? (type 'yes' to confirm): " confirm

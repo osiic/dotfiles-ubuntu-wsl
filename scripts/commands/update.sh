@@ -3,7 +3,7 @@
 # Update script functionality
 
 # Source core functions
-source "$(dirname "$0")/core/functions.sh"
+source "../core/functions.sh"
 
 # Function to check for updates
 check_for_updates() {
