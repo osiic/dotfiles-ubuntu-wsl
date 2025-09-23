@@ -3,7 +3,7 @@
 # Main installer script
 
 # Source core functions
-source "$(dirname "$0")/core/functions.sh"
+source "scripts/core/functions.sh"
 
 set -e
 
@@ -35,24 +35,24 @@ check_ubuntu_version
 # Check for updates on first run
 if [ ! -f ~/.setup_complete ]; then
     echo -e "\n${YELLOW}First time setup detected.${NC}"
-    source "$(dirname "$0")/commands/update.sh"
+    source "scripts/commands/update.sh"
     touch ~/.setup_complete
 fi
 
 # Source and run modules
-source "$(dirname "$0")/modules/github.sh"
+source "scripts/modules/github.sh"
 setup_github
 
-source "$(dirname "$0")/modules/system.sh"
+source "scripts/modules/system.sh"
 setup_system
 
-source "$(dirname "$0")/modules/devtools.sh"
+source "scripts/modules/devtools.sh"
 setup_devtools
 
-source "$(dirname "$0")/modules/shell.sh"
+source "scripts/modules/shell.sh"
 setup_shell
 
-source "$(dirname "$0")/modules/extras.sh"
+source "scripts/modules/extras.sh"
 setup_extras
 
 # ==============================================

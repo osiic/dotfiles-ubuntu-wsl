@@ -3,9 +3,9 @@
 # GitHub Setup Module
 
 # Source core functions
-source "$(dirname "$0")/../core/functions.sh"
-source "$(dirname "$0")/../utils/config.sh"
-source "$(dirname "$0")/../utils/validation.sh"
+source "../core/functions.sh"
+source "../utils/config.sh"
+source "../utils/validation.sh"
 
 setup_github() {
     section "GitHub Setup"

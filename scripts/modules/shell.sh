@@ -3,7 +3,7 @@
 # Shell Environment Setup Module
 
 # Source core functions
-source "$(dirname "$0")/../core/functions.sh"
+source "../core/functions.sh"
 
 setup_shell() {
     section "Shell Configuration"
