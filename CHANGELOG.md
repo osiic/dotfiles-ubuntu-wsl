@@ -1,5 +1,25 @@
 # Changelog
 
+## [v2.1.0] - 2025-09-23
+
+### Added
+- Verification script for post-installation checks
+- Enhanced error handling for all sudo operations
+- Graceful degradation for network failures
+- Comprehensive testing framework
+
+### Fixed
+- All path resolution issues across all modules
+- Sudo handling in non-interactive environments
+- Git authentication failures in restricted environments
+- Package installation errors with proper error handling
+
+### Changed
+- Improved documentation in README.md with compatibility matrix
+- Enhanced error messages for better user experience
+- Modularized functions for better code organization
+- Updated all modules to use consistent path resolution
+
 ## [v2.0.0] - 2025-09-23
 
 ### Added
@@ -15,7 +35,6 @@
 - Sudo password prompts in non-interactive environments
 - Git authentication failures in non-interactive environments
 - Package installation errors with proper error handling
-- Shell changing operations with sudo checks
 
 ### Changed
 - Refactored all modules to use consistent path resolution
