@@ -238,5 +238,3 @@ python3 -m venv ~/.venvs/default
 ---
 
 🎉 **Happy coding dengan WSL!**
-
-```
