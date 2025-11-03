@@ -123,7 +123,7 @@ section "System Configuration"
 
 # Create directories
 echo -e "${YELLOW}Creating directory structure...${NC}"
-mkdir -p ~/{projects,tools,scripts,.config}
+mkdir -p ~/{projects,.config}
 mkdir -p ~/.local/{bin,share,lib}
 mkdir -p ~/.cache/{zsh,nvim}
 
