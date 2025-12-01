@@ -6,8 +6,8 @@ echo "🚀 Bootstrapping Nix Environment..."
 # 1. Install Nix using Determinate Systems Installer if not present
 if ! command -v nix &> /dev/null; then
     echo "📦 Nix not found. Installing via Determinate Systems..."
-    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --determinate
-    
+    curl -fsSL https://install.determinate.systems/nix | sh -s -- install --determinate
+
     echo "✅ Nix installed. You may need to restart your shell or source the nix profile."
     echo "Please run this script again after restarting your shell."
     exit 0
