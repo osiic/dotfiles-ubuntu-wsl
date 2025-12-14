@@ -96,6 +96,8 @@ if [[ "$auth_method" == "1" ]]; then
         echo -e "\n${YELLOW}Please add this key to your GitHub account:${NC}"
         echo "https://github.com/settings/keys"
         read -p "Press Enter to continue after adding the key..."
+        git config --global user.name "$USER_NAME"
+        git config --global user.email "$USER_EMAIL"
     fi
 
 elif [[ "$auth_method" == "2" ]]; then
@@ -159,8 +161,6 @@ section "Development Tools Setup"
 
 # Git configuration
 echo -e "${YELLOW}Configuring Git...${NC}"
-git config --global user.name "$USER_NAME"
-git config --global user.email "$USER_EMAIL"
 git config --global core.editor "nvim"
 git config --global init.defaultBranch "main"
 git config --global pull.rebase true
@@ -183,8 +183,10 @@ if [ ! -d "$HOME/.nvm" ]; then
     echo -e "${YELLOW}Installing Node.js LTS...${NC}"
     nvm install --lts
     nvm alias default 'lts/*'
-    npm install -g npm yarn pnpm bun
+    npm install -g npm yarn pnpm bun 
+    npm install -g @openai/codex @qwen-code/qwen-code@latest
     npm install -g typescript ts-node nodemon eslint prettier
+    npm install -g hardhat next vercel
 else
     echo -e "${YELLOW}Node.js already installed${NC}"
 fi
@@ -328,7 +330,7 @@ dev() {
         return 1
     fi
     cd ~/projects/"$1" || return 1
-    tmux .
+    tmux
 }
 
 _dev_complete() {
